@@ -2,19 +2,19 @@
   "name": "world-cup-2026-predictor",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint",
-    "prisma:generate": "prisma generate",
-    "prisma:validate": "prisma validate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:seed": "tsx prisma/seed.ts",
-    "prisma:seed:pre": "tsx prisma/seed-pre-tournament.ts",
-    "prisma:seed:match-questions": "tsx prisma/seed-match-questions.ts",
-    "import:worldcup": "tsx prisma/import-world-cup-2026.ts"
-  },
+ "scripts": {
+  "dev": "next dev",
+  "build": "prisma generate && prisma migrate deploy && next build",
+  "start": "next start",
+  "lint": "eslint",
+  "prisma:generate": "prisma generate",
+  "prisma:validate": "prisma validate",
+  "prisma:migrate": "prisma migrate dev",
+  "prisma:seed": "tsx prisma/seed.ts",
+  "prisma:seed:pre": "tsx prisma/seed-pre-tournament.ts",
+  "prisma:seed:match-questions": "tsx prisma/seed-match-questions.ts",
+  "import:worldcup": "tsx prisma/import-world-cup-2026.ts"
+},
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
