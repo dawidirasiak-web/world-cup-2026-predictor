@@ -98,6 +98,15 @@ const externalStatsUrlsByMatchNumber: Record<number, string> = {
   6: "https://www.sofascore.com/football/match/australia-turkiye/aUbsQUb",
   7: "https://www.sofascore.com/football/match/haiti-scotland/VTbsEUc",
   8: "https://www.sofascore.com/football/match/qatar-switzerland/ZTbsRVb",
+  42: "https://www.sofascore.com/football/match/senegal-norway/AObsOUb",
+};
+
+const sofaScoreEventIdsByMatchNumber: Record<number, string> = {
+  1: "15186710",
+};
+
+const sofaScoreWidgetUrlsByMatchNumber: Record<number, string> = {
+  1: "https://widgets.sofascore.com/embed/lineups?id=15186710&widgetTheme=light",
 };
 
 const phaseByMatchNumber = (number: number) => {
@@ -405,6 +414,8 @@ async function main() {
       group: number <= 72 ? teamCache.get(homeCode)?.group ?? null : null,
       displayOrder: number,
       externalStatsUrl: externalStatsUrlsByMatchNumber[number],
+      sofaScoreEventId: sofaScoreEventIdsByMatchNumber[number],
+      sofaScoreWidgetUrl: sofaScoreWidgetUrlsByMatchNumber[number],
     };
 
     const match = existingMatch

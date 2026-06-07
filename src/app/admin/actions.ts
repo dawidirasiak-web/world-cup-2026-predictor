@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "@/lib/auth";
+import { recalculateMatchPredictions } from "@/lib/match-points";
 import { prisma } from "@/lib/prisma";
 
 const yesNoAnswerSchema = z.enum(["Tak", "Nie", ""]);
@@ -125,33 +126,12 @@ export async function saveMatchQuestionAnswer(formData: FormData) {
         match: {
           select: {
             id: true,
-            predictions: {
-              select: {
-                id: true,
-                questionAnswer: true,
-                scorePoints: true,
-              },
-            },
           },
         },
       },
     });
 
-    for (const prediction of question.match.predictions) {
-      const questionPoints =
-        correctAnswer &&
-        normalizeAnswer(prediction.questionAnswer) === normalizeAnswer(correctAnswer)
-          ? 1
-          : 0;
-
-      await transaction.matchPrediction.update({
-        where: { id: prediction.id },
-        data: {
-          questionPoints,
-          totalPoints: prediction.scorePoints + questionPoints,
-        },
-      });
-    }
+    await recalculateMatchPredictions(transaction, question.match.id);
   });
 
   revalidatePath("/admin");

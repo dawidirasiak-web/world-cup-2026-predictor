@@ -18,6 +18,25 @@ const preTournamentRules = [
   ["Każde pytanie przedturniejowe", "5 pkt"],
 ];
 
+const warmupVideos = [
+  {
+    title: "Mundialowa piosenka 1",
+    src: "https://www.youtube.com/embed/8n5dJwWXrbo?start=53&rel=0",
+  },
+  {
+    title: "Mundialowa piosenka 2",
+    src: "https://www.youtube.com/embed/pRpeEdMmmQ0?rel=0",
+  },
+  {
+    title: "Mundialowa piosenka 3",
+    src: "https://www.youtube.com/embed/TGtWWb9emYI?rel=0",
+  },
+  {
+    title: "Mundialowa piosenka 4",
+    src: "https://www.youtube.com/embed/7-7knsP2n5w?rel=0",
+  },
+];
+
 export default async function Home() {
   const session = await getServerSession(authOptions);
   const playerName = session?.user?.name ?? "Graczu";
@@ -129,14 +148,21 @@ export default async function Home() {
           <p className="mt-2 text-sm leading-6 text-slate-600">
             Odpal muzykę, ustaw typy i zaczynamy mundialową drogę.
           </p>
-          <div className="mt-5 overflow-hidden rounded-lg border border-slate-200 bg-slate-950">
-            <iframe
-              className="aspect-video w-full"
-              src="https://www.youtube.com/embed/8n5dJwWXrbo?start=53&rel=0"
-              title="Mundialowa piosenka"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-            />
+          <div className="mt-5 space-y-4">
+            {warmupVideos.map((video) => (
+              <div
+                key={video.src}
+                className="overflow-hidden rounded-lg border border-slate-200 bg-slate-950"
+              >
+                <iframe
+                  className="aspect-video w-full"
+                  src={video.src}
+                  title={video.title}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              </div>
+            ))}
           </div>
           <p className="mt-4 text-xs leading-5 text-slate-500">
             Film jest osadzony z YouTube. Jeśli przeglądarka zablokuje

@@ -11,6 +11,7 @@ const KNOWN_SOFASCORE_URLS_BY_MATCH_NUMBER: Record<number, string> = {
   6: "https://www.sofascore.com/football/match/australia-turkiye/aUbsQUb",
   7: "https://www.sofascore.com/football/match/haiti-scotland/VTbsEUc",
   8: "https://www.sofascore.com/football/match/qatar-switzerland/ZTbsRVb",
+  42: "https://www.sofascore.com/football/match/senegal-norway/AObsOUb",
 };
 
 export function getSofaScoreSearchUrl(homeTeam: string, awayTeam: string) {
@@ -57,11 +58,18 @@ export function getSofaScoreEventId(url?: string | null) {
   return slug ? KNOWN_SOFASCORE_EVENTS_BY_SLUG[slug] ?? null : null;
 }
 
+export function getResolvedSofaScoreEventId(params: {
+  eventId?: string | null;
+  url?: string | null;
+}) {
+  return params.eventId ?? getSofaScoreEventId(params.url);
+}
+
 export function getSofaScoreBaseMatchUrl(url: string) {
   return url.replace(/#.*$/, "");
 }
 
-export function getSofaScoreTabUrls(url: string) {
+export function getSofaScoreTabUrls(url: string, eventId?: string | null) {
   if (!url.includes("/football/match/")) {
     return {
       overview: url,
@@ -72,26 +80,26 @@ export function getSofaScoreTabUrls(url: string) {
   }
 
   const baseUrl = getSofaScoreBaseMatchUrl(url);
-  const eventId = getSofaScoreEventId(url);
+  const resolvedEventId = eventId ?? getSofaScoreEventId(url);
 
   return {
-    overview: eventId ? `${baseUrl}#id:${eventId}` : baseUrl,
+    overview: resolvedEventId ? `${baseUrl}#id:${resolvedEventId}` : baseUrl,
     lineups: `${baseUrl}#tab:lineups`,
     standings: `${baseUrl}#tab:standings`,
     matches: `${baseUrl}#tab:matches`,
   };
 }
 
-export function getSofaScoreWidgetUrls(url: string) {
-  const eventId = getSofaScoreEventId(url);
+export function getSofaScoreWidgetUrls(url: string, eventId?: string | null) {
+  const resolvedEventId = eventId ?? getSofaScoreEventId(url);
 
-  if (eventId) {
-    const eventUrl = `https://www.sofascore.com/event/${eventId}`;
+  if (resolvedEventId) {
+    const widgetBaseUrl = `https://widgets.sofascore.com/embed`;
 
     return {
-      lineups: `${eventUrl}/lineups/embed`,
-      attackMomentum: `${eventUrl}/attack-momentum/embed`,
-      statistics: `${eventUrl}/statistics/embed`,
+      lineups: `${widgetBaseUrl}/lineups?id=${resolvedEventId}&widgetTheme=light`,
+      attackMomentum: `${widgetBaseUrl}/attack-momentum?id=${resolvedEventId}&widgetTheme=light`,
+      statistics: `${widgetBaseUrl}/statistics?id=${resolvedEventId}&widgetTheme=light`,
     };
   }
 

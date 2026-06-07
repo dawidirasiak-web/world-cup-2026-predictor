@@ -176,26 +176,7 @@ export default async function MatchPage({
           </section>
 
           <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-semibold">Statystyki i H2H</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Tu podepniemy dane live, H2H, statystyki zawodników i składy.
-              SofaScore udostępnia widgety, ale do osadzenia konkretnego meczu
-              potrzebny jest jego dokładny URL lub identyfikator w SofaScore.
-            </p>
-            <div className="mt-5 grid gap-3 text-sm">
-              <div className="rounded-md bg-slate-50 p-3">
-                <p className="font-medium">Live score</p>
-                <p className="mt-1 text-slate-600">
-                  Aktualny wynik: {match.homeScore ?? "-"}:{match.awayScore ?? "-"}
-                </p>
-              </div>
-              <div className="rounded-md bg-slate-50 p-3">
-                <p className="font-medium">H2H i zawodnicy</p>
-                <p className="mt-1 text-slate-600">
-                  Sekcja przygotowana pod dane z zewnętrznego źródła.
-                </p>
-              </div>
-            </div>
+            <h2 className="text-xl font-semibold">Składy SofaScore</h2>
             <ExternalMatchStats matchId={match.id} externalStatsUrl={sofaScoreUrl} />
           </section>
         </div>

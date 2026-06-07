@@ -1,7 +1,7 @@
 import Link from "next/link";
+import { TeamLine } from "@/components/matches/team-line";
 import { formatMatchDate, phaseLabel } from "@/lib/format";
 import { isMatchPredictionOpen } from "@/lib/prediction-lock";
-import { TeamLine } from "@/components/matches/team-line";
 
 type MatchCardProps = {
   match: {
@@ -36,7 +36,10 @@ export function MatchCard({ match }: MatchCardProps) {
   const isOpen = isMatchPredictionOpen(match.startsAt);
 
   return (
-    <article className="relative overflow-hidden rounded-lg border border-slate-200 bg-white p-5 shadow-sm before:absolute before:inset-y-0 before:left-0 before:w-1.5 before:bg-[linear-gradient(180deg,#df0712,#284cff,#7ee000)]">
+    <article
+      id={`match-${match.id}`}
+      className="relative scroll-mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white p-5 shadow-sm before:absolute before:inset-y-0 before:left-0 before:w-1.5 before:bg-[linear-gradient(180deg,#df0712,#284cff,#7ee000)]"
+    >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-2 text-xs font-medium uppercase text-slate-500">
@@ -85,12 +88,12 @@ export function MatchCard({ match }: MatchCardProps) {
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
         {prediction ? (
-          <p className="text-sm text-slate-700">
-            Twój typ:{" "}
-            <span className="font-semibold">
+          <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900 shadow-sm">
+            <span className="font-medium">Twój typ</span>
+            <span className="ml-2 rounded bg-white px-2 py-1 font-semibold text-slate-950">
               {prediction.predictedHomeScore}:{prediction.predictedAwayScore}
             </span>
-          </p>
+          </div>
         ) : (
           <p className="text-sm text-slate-600">
             Nie masz jeszcze typu dla tego meczu.

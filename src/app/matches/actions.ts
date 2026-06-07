@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "@/lib/auth";
@@ -82,11 +83,9 @@ export async function saveMatchPrediction(
   });
 
   revalidatePath("/dashboard");
+  revalidatePath("/matches");
   revalidatePath(`/matches/${match.id}`);
   revalidatePath("/ranking");
 
-  return {
-    ok: true,
-    message: "Typ zapisany.",
-  };
+  redirect(`/matches#match-${match.id}`);
 }

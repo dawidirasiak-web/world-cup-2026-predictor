@@ -1,6 +1,6 @@
-import { getSofaScoreEventId } from "@/lib/external-stats";
+import { getResolvedSofaScoreEventId } from "@/lib/external-stats";
 
-const SOFASCORE_API_BASE = "https://www.sofascore.com/api/v1";
+const SOFASCORE_API_BASE = "https://api.sofascore.com/api/v1";
 
 type SofaScoreFetchResult = {
   ok: boolean;
@@ -35,8 +35,21 @@ async function fetchSofaScoreJson(path: string, referer?: string | null) {
   } satisfies SofaScoreFetchResult;
 }
 
-export async function getSofaScoreMatchData(externalStatsUrl?: string | null) {
-  const eventId = getSofaScoreEventId(externalStatsUrl);
+export async function getSofaScoreEventData(params: {
+  eventId: string;
+  externalStatsUrl?: string | null;
+}) {
+  return fetchSofaScoreJson(`/event/${params.eventId}`, params.externalStatsUrl);
+}
+
+export async function getSofaScoreMatchData(params: {
+  externalStatsUrl?: string | null;
+  eventId?: string | null;
+}) {
+  const eventId = getResolvedSofaScoreEventId({
+    eventId: params.eventId,
+    url: params.externalStatsUrl,
+  });
 
   if (!eventId) {
     return {
@@ -51,10 +64,10 @@ export async function getSofaScoreMatchData(externalStatsUrl?: string | null) {
   }
 
   const [event, statistics, lineups, h2h] = await Promise.all([
-    fetchSofaScoreJson(`/event/${eventId}`, externalStatsUrl),
-    fetchSofaScoreJson(`/event/${eventId}/statistics`, externalStatsUrl),
-    fetchSofaScoreJson(`/event/${eventId}/lineups`, externalStatsUrl),
-    fetchSofaScoreJson(`/event/${eventId}/h2h`, externalStatsUrl),
+    fetchSofaScoreJson(`/event/${eventId}`, params.externalStatsUrl),
+    fetchSofaScoreJson(`/event/${eventId}/statistics`, params.externalStatsUrl),
+    fetchSofaScoreJson(`/event/${eventId}/lineups`, params.externalStatsUrl),
+    fetchSofaScoreJson(`/event/${eventId}/h2h`, params.externalStatsUrl),
   ]);
 
   const available = event.ok;

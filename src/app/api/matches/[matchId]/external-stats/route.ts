@@ -2,11 +2,9 @@ import { NextResponse } from "next/server";
 import {
   getExternalStatsUrl,
   getKnownSofaScoreUrl,
-  getSofaScoreTabUrls,
-  getSofaScoreWidgetUrls,
+  getResolvedSofaScoreEventId,
 } from "@/lib/external-stats";
 import { prisma } from "@/lib/prisma";
-import { getSofaScoreMatchData } from "@/lib/sofascore";
 
 export async function GET(
   _request: Request,
@@ -28,16 +26,22 @@ export async function GET(
   const knownUrl = getKnownSofaScoreUrl(match.displayOrder);
   const externalStatsUrl = getExternalStatsUrl({
     externalStatsUrl: match.externalStatsUrl ?? knownUrl,
+    matchNumber: match.displayOrder,
     homeTeam: match.homeTeam.name,
     awayTeam: match.awayTeam.name,
   });
-  const sofaScore = await getSofaScoreMatchData(externalStatsUrl);
-
+  const sofaScoreEventId = getResolvedSofaScoreEventId({
+    eventId: match.sofaScoreEventId,
+    url: externalStatsUrl,
+  });
   return NextResponse.json({
     provider: "SofaScore",
     externalStatsUrl,
-    tabs: getSofaScoreTabUrls(externalStatsUrl),
-    widgets: getSofaScoreWidgetUrls(externalStatsUrl),
-    sofaScore,
+    sofaScoreEventId,
+    sofaScoreWidgetUrl:
+      match.sofaScoreWidgetUrl ??
+      (sofaScoreEventId
+        ? `https://widgets.sofascore.com/embed/lineups?id=${sofaScoreEventId}&widgetTheme=light`
+        : null),
   });
 }

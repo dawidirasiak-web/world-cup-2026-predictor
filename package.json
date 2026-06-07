@@ -2,18 +2,19 @@
   "name": "world-cup-2026-predictor",
   "version": "0.1.0",
   "private": true,
- "scripts": {
-  "dev": "next dev",
-  "build": "prisma generate && prisma migrate deploy && next build",
-  "start": "next start",
-  "lint": "eslint",
-  "prisma:generate": "prisma generate",
-  "prisma:validate": "prisma validate",
-  "prisma:migrate": "prisma migrate dev",
-  "prisma:seed": "tsx prisma/seed.ts",
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && prisma migrate deploy && next build",
+    "start": "next start",
+    "lint": "eslint",
+    "prisma:generate": "prisma generate",
+    "prisma:validate": "prisma validate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:seed": "tsx prisma/seed.ts",
   "prisma:seed:pre": "tsx prisma/seed-pre-tournament.ts",
   "prisma:seed:match-questions": "tsx prisma/seed-match-questions.ts",
-  "import:worldcup": "tsx prisma/import-world-cup-2026.ts"
+  "import:worldcup": "tsx prisma/import-world-cup-2026.ts",
+  "import:sofascore-widgets": "tsx prisma/import-sofascore-widgets.ts"
 },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
@@ -36,6 +37,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.7",
+    "playwright": "^1.60.0",
     "tailwindcss": "^4",
     "tsx": "^4.22.4",
     "typescript": "^5"
