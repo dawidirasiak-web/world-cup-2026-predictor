@@ -1,0 +1,211 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum MatchStatus {
+  SCHEDULED
+  LIVE
+  FINISHED
+}
+
+enum MatchPhase {
+  GROUP_STAGE
+  ROUND_OF_32
+  ROUND_OF_16
+  QUARTER_FINAL
+  SEMI_FINAL
+  THIRD_PLACE
+  FINAL
+}
+
+enum PreTournamentQuestionType {
+  YES_NO
+  OPEN
+}
+
+model User {
+  id                    String                    @id @default(cuid())
+  name                  String
+  email                 String                    @unique
+  passwordHash          String
+  role                  Role                      @default(USER)
+  emailVerifiedAt       DateTime?
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  matchPredictions      MatchPrediction[]
+  passwordResetTokens   PasswordResetToken[]
+  preTournamentPrediction PreTournamentPrediction?
+
+  @@index([role])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Team {
+  id                          String                    @id @default(cuid())
+  name                        String
+  shortName                   String
+  fifaCode                    String                    @unique
+  flagUrl                     String?
+  group                       String?
+  displayOrder                Int                       @default(0)
+  createdAt                   DateTime                  @default(now())
+  updatedAt                   DateTime                  @updatedAt
+  homeMatches                 Match[]                   @relation("HomeTeam")
+  awayMatches                 Match[]                   @relation("AwayTeam")
+  finalistOnePredictions      PreTournamentPrediction[] @relation("FinalistOne")
+  finalistTwoPredictions      PreTournamentPrediction[] @relation("FinalistTwo")
+
+  @@index([group])
+  @@index([displayOrder])
+}
+
+model Stadium {
+  id        String   @id @default(cuid())
+  name      String
+  city      String
+  country   String
+  capacity  Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  matches   Match[]
+}
+
+model Match {
+  id              String            @id @default(cuid())
+  homeTeamId      String
+  awayTeamId      String
+  stadiumId       String?
+  startsAt        DateTime
+  phase           MatchPhase
+  group           String?
+  displayOrder    Int               @default(0)
+  status          MatchStatus        @default(SCHEDULED)
+  homeScore       Int?
+  awayScore       Int?
+  externalStatsUrl String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  homeTeam        Team              @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam        Team              @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  stadium         Stadium?          @relation(fields: [stadiumId], references: [id])
+  question        MatchQuestion?
+  predictions     MatchPrediction[]
+
+  @@index([startsAt])
+  @@index([phase])
+  @@index([group])
+  @@index([status])
+}
+
+model MatchQuestion {
+  id            String   @id @default(cuid())
+  matchId       String   @unique
+  question      String
+  correctAnswer String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  match         Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+}
+
+model MatchPrediction {
+  id                 String   @id @default(cuid())
+  userId             String
+  matchId            String
+  predictedHomeScore Int
+  predictedAwayScore Int
+  questionAnswer     String?
+  scorePoints        Int      @default(0)
+  questionPoints     Int      @default(0)
+  totalPoints        Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  match              Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, matchId])
+  @@index([matchId])
+}
+
+model PreTournamentQuestion {
+  id            String                @id @default(cuid())
+  question      String
+  type          PreTournamentQuestionType @default(YES_NO)
+  correctAnswer String?
+  points        Int                   @default(5)
+  displayOrder  Int                   @default(0)
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  answers       PreTournamentAnswer[]
+}
+
+model PreTournamentPrediction {
+  id                 String                @id @default(cuid())
+  userId             String                @unique
+  finalistOneTeamId  String
+  finalistTwoTeamId  String
+  topScorer          String
+  topScorerGoals     Int
+  finalistPoints     Int                   @default(0)
+  topScorerPoints    Int                   @default(0)
+  topScorerGoalsPoints Int                 @default(0)
+  questionPoints     Int                   @default(0)
+  totalPoints        Int                   @default(0)
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  user               User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  finalistOneTeam    Team                  @relation("FinalistOne", fields: [finalistOneTeamId], references: [id])
+  finalistTwoTeam    Team                  @relation("FinalistTwo", fields: [finalistTwoTeamId], references: [id])
+  answers            PreTournamentAnswer[]
+}
+
+model PreTournamentAnswer {
+  id           String                  @id @default(cuid())
+  predictionId String
+  questionId   String
+  answer       String
+  points       Int                     @default(0)
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+  prediction   PreTournamentPrediction @relation(fields: [predictionId], references: [id], onDelete: Cascade)
+  question     PreTournamentQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([predictionId, questionId])
+}
+
+model TournamentResult {
+  id                      String   @id @default("world-cup-2026")
+  championTeamId          String?
+  finalistOneTeamId       String?
+  finalistTwoTeamId       String?
+  topScorer               String?
+  topScorerGoals          Int?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+}

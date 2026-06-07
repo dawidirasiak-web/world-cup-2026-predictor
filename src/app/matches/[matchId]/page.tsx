@@ -1,0 +1,205 @@
+import Link from "next/link";
+import { getServerSession } from "next-auth";
+import { notFound, redirect } from "next/navigation";
+import { SignOutButton } from "@/components/auth/sign-out-button";
+import { ExternalMatchStats } from "@/components/matches/external-match-stats";
+import { MatchPredictionForm } from "@/components/matches/match-prediction-form";
+import { TeamLine } from "@/components/matches/team-line";
+import { authOptions } from "@/lib/auth";
+import { getExternalStatsUrl } from "@/lib/external-stats";
+import { formatMatchDate, phaseLabel } from "@/lib/format";
+import { isMatchPredictionOpen } from "@/lib/prediction-lock";
+import { prisma } from "@/lib/prisma";
+
+export default async function MatchPage({
+  params,
+}: {
+  params: Promise<{ matchId: string }>;
+}) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user) {
+    redirect("/auth/signin");
+  }
+
+  const { matchId } = await params;
+  const match = await prisma.match.findUnique({
+    where: { id: matchId },
+    include: {
+      homeTeam: true,
+      awayTeam: true,
+      stadium: true,
+      question: true,
+      predictions: {
+        orderBy: { createdAt: "asc" },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              role: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!match) {
+    notFound();
+  }
+
+  const prediction = match.predictions.find(
+    (item) => item.userId === session.user.id,
+  );
+  const otherPredictions = match.predictions.filter(
+    (item) => item.userId !== session.user.id,
+  );
+  const isOpen = isMatchPredictionOpen(match.startsAt);
+  const sofaScoreUrl = getExternalStatsUrl({
+    externalStatsUrl: match.externalStatsUrl,
+    matchNumber: match.displayOrder,
+    homeTeam: match.homeTeam.name,
+    awayTeam: match.awayTeam.name,
+  });
+
+  return (
+    <main className="mx-auto min-h-screen max-w-5xl px-6 py-8">
+      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-6">
+        <Link
+          href="/matches"
+          className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+        >
+          Powrót do terminarza
+        </Link>
+        <SignOutButton />
+      </header>
+
+      <section className="wc-section-hero">
+        <div className="flex flex-wrap items-center gap-2 text-xs font-medium uppercase text-slate-500">
+          <span>{phaseLabel(match.phase)}</span>
+          {match.group ? <span>Grupa {match.group}</span> : null}
+          <span>Mecz {match.displayOrder}</span>
+        </div>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-5">
+          <h1 className="flex flex-wrap items-center gap-3 text-3xl font-semibold tracking-tight">
+            <TeamLine
+              name={match.homeTeam.name}
+              flagUrl={match.homeTeam.flagUrl}
+            />
+            <span className="text-slate-400">
+              {match.homeScore ?? "-"}:{match.awayScore ?? "-"}
+            </span>
+            <TeamLine
+              name={match.awayTeam.name}
+              flagUrl={match.awayTeam.flagUrl}
+            />
+          </h1>
+          <span
+            className={`rounded-md px-3 py-1 text-sm font-medium ${
+              match.status === "LIVE"
+                ? "bg-red-50 text-red-700"
+                : match.status === "FINISHED"
+                  ? "bg-slate-100 text-slate-700"
+                  : "bg-emerald-50 text-emerald-700"
+            }`}
+          >
+            {match.status === "LIVE"
+              ? "Live"
+              : match.status === "FINISHED"
+                ? "Zakończony"
+                : "Zaplanowany"}
+          </span>
+        </div>
+        <p className="mt-3 text-slate-600">{formatMatchDate(match.startsAt)}</p>
+        <p className="mt-1 text-slate-600">
+          {match.stadium
+            ? `${match.stadium.name}, ${match.stadium.city}`
+            : "Stadion do ustalenia"}
+        </p>
+      </section>
+
+      <section className="grid gap-5 lg:grid-cols-[1fr_0.85fr]">
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <h2 className="text-xl font-semibold">Twój typ</h2>
+            <span
+              className={`rounded-md px-3 py-1 text-sm font-medium ${
+                isOpen
+                  ? "bg-emerald-50 text-emerald-700"
+                  : "bg-slate-100 text-slate-600"
+              }`}
+            >
+              {isOpen ? "Typowanie otwarte" : "Typowanie zamknięte"}
+            </span>
+          </div>
+          <MatchPredictionForm
+            matchId={match.id}
+            homeTeamName={match.homeTeam.name}
+            awayTeamName={match.awayTeam.name}
+            question={match.question?.question}
+            defaultHomeScore={prediction?.predictedHomeScore}
+            defaultAwayScore={prediction?.predictedAwayScore}
+            defaultQuestionAnswer={prediction?.questionAnswer}
+            disabled={!isOpen}
+          />
+        </div>
+
+        <div className="space-y-5">
+          <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-xl font-semibold">Typy innych graczy</h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Zapisane typy dla tego meczu: {match.predictions.length}
+            </p>
+            <div className="mt-5 space-y-3">
+              {otherPredictions.length > 0 ? (
+                otherPredictions.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between gap-3 rounded-md bg-slate-50 p-3 text-sm"
+                  >
+                    <div>
+                      <p className="font-medium">{item.user.name}</p>
+                      <p className="text-xs text-slate-500">{item.user.role}</p>
+                    </div>
+                    <p className="text-lg font-semibold">
+                      {item.predictedHomeScore}:{item.predictedAwayScore}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="rounded-md bg-slate-50 p-3 text-sm text-slate-600">
+                  Nikt inny nie zapisał jeszcze typu dla tego meczu.
+                </p>
+              )}
+            </div>
+          </section>
+
+          <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-xl font-semibold">Statystyki i H2H</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Tu podepniemy dane live, H2H, statystyki zawodników i składy.
+              SofaScore udostępnia widgety, ale do osadzenia konkretnego meczu
+              potrzebny jest jego dokładny URL lub identyfikator w SofaScore.
+            </p>
+            <div className="mt-5 grid gap-3 text-sm">
+              <div className="rounded-md bg-slate-50 p-3">
+                <p className="font-medium">Live score</p>
+                <p className="mt-1 text-slate-600">
+                  Aktualny wynik: {match.homeScore ?? "-"}:{match.awayScore ?? "-"}
+                </p>
+              </div>
+              <div className="rounded-md bg-slate-50 p-3">
+                <p className="font-medium">H2H i zawodnicy</p>
+                <p className="mt-1 text-slate-600">
+                  Sekcja przygotowana pod dane z zewnętrznego źródła.
+                </p>
+              </div>
+            </div>
+            <ExternalMatchStats matchId={match.id} externalStatsUrl={sofaScoreUrl} />
+          </section>
+        </div>
+      </section>
+    </main>
+  );
+}

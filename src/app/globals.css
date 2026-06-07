@@ -1,0 +1,290 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f4f7fb;
+  --foreground: #07111f;
+  --wc-red: #df0712;
+  --wc-blue: #284cff;
+  --wc-green: #7ee000;
+  --wc-violet: #b99cff;
+  --wc-gold: #c89b3c;
+  --wc-ink: #050914;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background:
+    linear-gradient(115deg, rgba(223, 7, 18, 0.16) 0 9%, transparent 9% 100%),
+    linear-gradient(245deg, rgba(40, 76, 255, 0.14) 0 11%, transparent 11% 100%),
+    linear-gradient(180deg, rgba(126, 224, 0, 0.1) 0 120px, transparent 120px),
+    linear-gradient(90deg, rgba(185, 156, 255, 0.08) 0 1px, transparent 1px),
+    var(--background);
+  background-attachment: fixed;
+  background-repeat: no-repeat, no-repeat, no-repeat, repeat, repeat;
+  background-size: 100% 100%, 100% 100%, 100% 240px, 44px 44px, auto;
+  color: var(--foreground);
+}
+
+.wc-page::before {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 50;
+  height: 10px;
+  background: linear-gradient(
+    90deg,
+    var(--wc-red) 0 18%,
+    var(--wc-blue) 18% 36%,
+    var(--wc-green) 36% 54%,
+    var(--wc-violet) 54% 72%,
+    #ff7a18 72% 86%,
+    var(--wc-red) 86% 100%
+  );
+  content: "";
+  pointer-events: none;
+}
+
+.wc-page main {
+  position: relative;
+  padding-top: 3.5rem;
+}
+
+.wc-page main::before {
+  position: absolute;
+  inset: 18px auto auto -70px;
+  z-index: -1;
+  width: 340px;
+  height: 520px;
+  border: 28px solid rgba(223, 7, 18, 0.1);
+  border-right-color: rgba(40, 76, 255, 0.12);
+  border-bottom-color: rgba(126, 224, 0, 0.14);
+  border-radius: 44px;
+  content: "";
+  transform: rotate(-10deg);
+}
+
+.wc-page main::after {
+  position: absolute;
+  inset: 1.25rem 1.5rem auto auto;
+  z-index: -1;
+  color: rgba(5, 9, 20, 0.045);
+  content: "26";
+  font-size: clamp(7rem, 16vw, 18rem);
+  font-weight: 950;
+  line-height: 0.8;
+  pointer-events: none;
+}
+
+.wc-page main > header {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(200, 155, 60, 0.24), transparent 42%),
+    linear-gradient(90deg, rgba(223, 7, 18, 0.42), transparent 18%),
+    linear-gradient(120deg, var(--wc-ink), #111827 62%, #14235c);
+  color: white;
+  padding: 1.35rem 1.5rem;
+  box-shadow: 0 24px 70px rgba(5, 9, 20, 0.22);
+}
+
+.wc-page main > header::after {
+  position: absolute;
+  inset: auto -2rem -4.2rem auto;
+  color: rgba(255, 255, 255, 0.08);
+  content: "26";
+  font-size: 9rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.wc-page main > header h1,
+.wc-page main > header p {
+  color: inherit;
+}
+
+.wc-page main > header a,
+.wc-page main > header button {
+  position: relative;
+  z-index: 1;
+  border-color: rgba(255, 255, 255, 0.26) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: white !important;
+  box-shadow: none;
+}
+
+.wc-page main > header a:hover,
+.wc-page main > header button:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+.wc-page main > header a.bg-white,
+.wc-page main > header button.bg-white {
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+.wc-page .bg-white {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.92)),
+    linear-gradient(135deg, rgba(40, 76, 255, 0.08), transparent 38%),
+    white;
+  border-color: rgba(15, 23, 42, 0.12);
+  box-shadow:
+    0 16px 42px rgba(15, 23, 42, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.75) inset;
+}
+
+.wc-page section.rounded-lg,
+.wc-page article.rounded-lg,
+.wc-page form section {
+  position: relative;
+}
+
+.wc-page section.rounded-lg::before,
+.wc-page article.rounded-lg::before,
+.wc-page form section::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  border-radius: 8px 0 0 8px;
+  background: linear-gradient(180deg, var(--wc-red), var(--wc-blue), var(--wc-green));
+  content: "";
+}
+
+.wc-page table thead {
+  background:
+    linear-gradient(90deg, rgba(223, 7, 18, 0.12), rgba(40, 76, 255, 0.12)),
+    #f8fafc;
+}
+
+.wc-page table tbody tr:hover {
+  background: rgba(40, 76, 255, 0.035);
+}
+
+.wc-page input,
+.wc-page select,
+.wc-page textarea {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.96));
+}
+
+.wc-page input:focus,
+.wc-page select:focus,
+.wc-page textarea:focus {
+  border-color: var(--wc-blue) !important;
+  box-shadow: 0 0 0 3px rgba(40, 76, 255, 0.12);
+}
+
+.wc-page .bg-slate-950 {
+  background:
+    linear-gradient(135deg, rgba(200, 155, 60, 0.28), transparent 45%),
+    var(--wc-ink);
+  box-shadow: 0 10px 24px rgba(5, 9, 20, 0.2);
+}
+
+.wc-page .bg-slate-950:hover {
+  background:
+    linear-gradient(135deg, rgba(200, 155, 60, 0.34), transparent 48%),
+    #111827;
+}
+
+.wc-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #006b4f;
+  font-size: 0.875rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.wc-kicker::before {
+  width: 0.75rem;
+  height: 0.75rem;
+  border: 3px solid var(--wc-gold);
+  border-radius: 999px;
+  content: "";
+}
+
+.wc-hero-card {
+  overflow: hidden;
+  position: relative;
+}
+
+.wc-hero-card::after {
+  position: absolute;
+  inset: auto -18px -26px auto;
+  width: 150px;
+  height: 150px;
+  border: 22px solid rgba(40, 76, 255, 0.16);
+  border-left-color: rgba(223, 7, 18, 0.16);
+  border-top-color: rgba(126, 224, 0, 0.18);
+  border-radius: 30px;
+  content: "";
+  transform: rotate(18deg);
+}
+
+.wc-section-hero {
+  position: relative;
+  overflow: hidden;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(200, 155, 60, 0.22), transparent 36%),
+    linear-gradient(90deg, rgba(223, 7, 18, 0.34), transparent 24%),
+    linear-gradient(120deg, #050914, #172554 68%, #2d1763);
+  color: white;
+  padding: clamp(1.5rem, 4vw, 2.25rem);
+  box-shadow: 0 26px 70px rgba(5, 9, 20, 0.22);
+}
+
+.wc-section-hero::after {
+  position: absolute;
+  inset: auto 1rem -4.5rem auto;
+  color: rgba(255, 255, 255, 0.08);
+  content: "26";
+  font-size: clamp(6rem, 14vw, 12rem);
+  font-weight: 950;
+  line-height: 1;
+}
+
+.wc-section-hero h1,
+.wc-section-hero h2,
+.wc-section-hero p,
+.wc-section-hero span:not([class*="bg-"]) {
+  color: inherit;
+}
+
+.wc-section-hero span.bg-emerald-50 {
+  background: rgba(16, 185, 129, 0.16) !important;
+  color: #d1fae5 !important;
+}
+
+.wc-section-hero span.bg-red-50 {
+  background: rgba(239, 68, 68, 0.16) !important;
+  color: #fee2e2 !important;
+}
+
+.wc-section-hero span.bg-slate-100 {
+  background: rgba(255, 255, 255, 0.14) !important;
+  color: white !important;
+}
+
+.wc-section-hero .text-slate-400,
+.wc-section-hero .text-slate-500,
+.wc-section-hero .text-slate-600 {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.wc-section-hero .wc-kicker {
+  color: #c8f7d1;
+}
