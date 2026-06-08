@@ -12,6 +12,8 @@ const credentialsSchema = z.object({
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60,
+    updateAge: 24 * 60 * 60,
   },
   pages: {
     signIn: "/auth/signin",
@@ -52,6 +54,8 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           email: user.email,
           role: user.role,
+          firstName: user.firstName,
+          lastName: user.lastName,
         };
       },
     }),
@@ -60,6 +64,8 @@ export const authOptions: NextAuthOptions = {
     jwt({ token, user }) {
       if (user) {
         token.role = user.role;
+        token.firstName = user.firstName;
+        token.lastName = user.lastName;
       }
 
       return token;
@@ -68,6 +74,8 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.sub ?? "";
         session.user.role = token.role;
+        session.user.firstName = token.firstName;
+        session.user.lastName = token.lastName;
       }
 
       return session;

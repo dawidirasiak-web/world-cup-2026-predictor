@@ -12,12 +12,16 @@ const prisma = new PrismaClient({
 const users = [
   {
     name: "Admin",
+    firstName: "Admin",
+    lastName: "System",
     email: "admin@example.com",
     password: "Admin123!",
     role: "ADMIN" as const,
   },
   {
     name: "Test User",
+    firstName: "Test",
+    lastName: "User",
     email: "user@example.com",
     password: "User123!",
     role: "USER" as const,
@@ -110,10 +114,14 @@ async function main() {
       where: { email: user.email },
       update: {
         name: user.name,
+        firstName: user.firstName,
+        lastName: user.lastName,
         role: user.role,
       },
       create: {
         name: user.name,
+        firstName: user.firstName,
+        lastName: user.lastName,
         email: user.email,
         passwordHash: await hashPassword(user.password),
         role: user.role,

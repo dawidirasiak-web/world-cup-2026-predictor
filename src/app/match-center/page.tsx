@@ -11,20 +11,22 @@ import { prisma } from "@/lib/prisma";
 const SOFASCORE_TOURNAMENT_URL =
   "https://www.sofascore.com/football/tournament/world/world-championship/16#id:58210";
 
-type MatchWithRelations = Awaited<ReturnType<typeof getMatches>>[number];
-type TeamForStandings = Awaited<ReturnType<typeof getTeams>>[number];
+const SOFASCORE_GROUP_WIDGETS = [
+  { group: "A", tournamentId: 3954, slug: "world-championship-gr-a" },
+  { group: "B", tournamentId: 3955, slug: "world-championship-gr-b" },
+  { group: "C", tournamentId: 3956, slug: "world-championship-gr-c" },
+  { group: "D", tournamentId: 3957, slug: "world-championship-gr-d" },
+  { group: "E", tournamentId: 3958, slug: "world-championship-gr-e" },
+  { group: "F", tournamentId: 3959, slug: "world-championship-gr-f" },
+  { group: "G", tournamentId: 3960, slug: "world-championship-gr-g" },
+  { group: "H", tournamentId: 3961, slug: "world-championship-gr-h" },
+  { group: "I", tournamentId: 139403, slug: "world-championship-gr-i" },
+  { group: "J", tournamentId: 139404, slug: "world-championship-gr-j" },
+  { group: "K", tournamentId: 139405, slug: "world-championship-gr-k" },
+  { group: "L", tournamentId: 139406, slug: "world-championship-gr-l" },
+];
 
-type StandingRow = {
-  team: TeamForStandings;
-  played: number;
-  won: number;
-  drawn: number;
-  lost: number;
-  goalsFor: number;
-  goalsAgainst: number;
-  goalDifference: number;
-  points: number;
-};
+type MatchWithRelations = Awaited<ReturnType<typeof getMatches>>[number];
 
 async function getMatches() {
   return prisma.match.findMany({
@@ -33,6 +35,7 @@ async function getMatches() {
       homeTeam: true,
       awayTeam: true,
       stadium: true,
+      question: true,
       _count: {
         select: { predictions: true },
       },
@@ -40,13 +43,8 @@ async function getMatches() {
   });
 }
 
-async function getTeams() {
-  return prisma.team.findMany({
-    where: {
-      group: { not: null },
-    },
-    orderBy: [{ group: "asc" }, { displayOrder: "asc" }, { name: "asc" }],
-  });
+function formatCorrectAnswer(answer?: string | null) {
+  return answer ? `Poprawna odpowiedź: ${answer}` : "Poprawna odpowiedź: brak";
 }
 
 function getMatchStatus(match: {
@@ -63,79 +61,6 @@ function getMatchStatus(match: {
   }
 
   return "Zaplanowany";
-}
-
-function createEmptyRow(team: TeamForStandings): StandingRow {
-  return {
-    team,
-    played: 0,
-    won: 0,
-    drawn: 0,
-    lost: 0,
-    goalsFor: 0,
-    goalsAgainst: 0,
-    goalDifference: 0,
-    points: 0,
-  };
-}
-
-function applyResult(
-  row: StandingRow,
-  goalsFor: number,
-  goalsAgainst: number,
-) {
-  row.played += 1;
-  row.goalsFor += goalsFor;
-  row.goalsAgainst += goalsAgainst;
-  row.goalDifference = row.goalsFor - row.goalsAgainst;
-
-  if (goalsFor > goalsAgainst) {
-    row.won += 1;
-    row.points += 3;
-    return;
-  }
-
-  if (goalsFor === goalsAgainst) {
-    row.drawn += 1;
-    row.points += 1;
-    return;
-  }
-
-  row.lost += 1;
-}
-
-function buildGroupStandings(
-  groupTeams: TeamForStandings[],
-  groupMatches: MatchWithRelations[],
-) {
-  const rows = new Map(
-    groupTeams.map((team) => [team.id, createEmptyRow(team)]),
-  );
-
-  for (const match of groupMatches) {
-    if (match.homeScore === null || match.awayScore === null) {
-      continue;
-    }
-
-    const homeRow = rows.get(match.homeTeamId);
-    const awayRow = rows.get(match.awayTeamId);
-
-    if (!homeRow || !awayRow) {
-      continue;
-    }
-
-    applyResult(homeRow, match.homeScore, match.awayScore);
-    applyResult(awayRow, match.awayScore, match.homeScore);
-  }
-
-  return [...rows.values()].sort((first, second) => {
-    if (second.points !== first.points) return second.points - first.points;
-    if (second.goalDifference !== first.goalDifference) {
-      return second.goalDifference - first.goalDifference;
-    }
-    if (second.goalsFor !== first.goalsFor) return second.goalsFor - first.goalsFor;
-    return first.team.name.localeCompare(second.team.name, "pl");
-  });
 }
 
 function groupBy<T>(
@@ -155,6 +80,66 @@ function groupBy<T>(
   }, {});
 }
 
+function SofaScoreGroupWidget({
+  group,
+  tournamentId,
+}: {
+  group: string;
+  tournamentId: number;
+}) {
+  const groupTitle = `Group ${group}`;
+  const widgetSrc = `https://widgets.sofascore.com/embed/tournament/${tournamentId}/season/58210/standings/${encodeURIComponent(
+    groupTitle,
+  )}?widgetTitle=${encodeURIComponent(groupTitle)}&showCompetitionLogo=true`;
+
+  return (
+    <div className="h-[315px] overflow-hidden rounded-md border border-slate-100 bg-slate-50">
+      <iframe
+        id={`sofa-standings-embed-${tournamentId}-58210`}
+        title={`Tabela SofaScore - Grupa ${group}`}
+        src={widgetSrc}
+        className="h-[431px] w-full max-w-full"
+        loading="lazy"
+        scrolling="no"
+      />
+    </div>
+  );
+}
+
+function MatchQuestionBlock({ match }: { match: MatchWithRelations }) {
+  if (!match.question) {
+    return null;
+  }
+
+  return (
+    <p className="mt-2 rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-700">
+      {match.question.question}{" "}
+      <span className="font-semibold">
+        {formatCorrectAnswer(match.question.correctAnswer)}
+      </span>
+    </p>
+  );
+}
+
+function MatchListItem({ match }: { match: MatchWithRelations }) {
+  return (
+    <Link
+      href={`/matches/${match.id}`}
+      className="block rounded-md bg-slate-50 px-3 py-2 text-sm transition hover:bg-slate-100"
+    >
+      <span className="flex items-center justify-between gap-4">
+        <span className="min-w-0 truncate font-medium">
+          {match.homeTeam.name} vs {match.awayTeam.name}
+        </span>
+        <span className="shrink-0 text-slate-500">
+          {match.homeScore ?? "-"}:{match.awayScore ?? "-"} ·{" "}
+          {formatMatchDate(match.startsAt)}
+        </span>
+      </span>
+    </Link>
+  );
+}
+
 export default async function MatchCenterPage() {
   const session = await getServerSession(authOptions);
 
@@ -162,10 +147,8 @@ export default async function MatchCenterPage() {
     redirect("/auth/signin");
   }
 
-  const [matches, teams] = await Promise.all([getMatches(), getTeams()]);
-  const groups = [...new Set(teams.map((team) => team.group).filter(Boolean))]
-    .sort((first, second) => first!.localeCompare(second!, "pl")) as string[];
-  const teamsByGroup = groupBy(teams, (team) => team.group);
+  const matches = await getMatches();
+  const groups = SOFASCORE_GROUP_WIDGETS.map((widget) => widget.group);
   const groupStageMatches = matches.filter(
     (match) => match.phase === "GROUP_STAGE",
   );
@@ -185,9 +168,7 @@ export default async function MatchCenterPage() {
     <main className="mx-auto min-h-screen max-w-6xl px-6 py-8">
       <header className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-6">
         <div>
-          <p className="wc-kicker">
-            Centrum meczów
-          </p>
+          <p className="wc-kicker">Centrum meczów</p>
           <h1 className="text-3xl font-semibold tracking-tight">
             Mistrzostwa Świata 2026
           </h1>
@@ -207,7 +188,9 @@ export default async function MatchCenterPage() {
         <div className="wc-hero-card rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <p className="text-sm font-medium text-slate-500">Wszystkie mecze</p>
           <p className="mt-2 text-3xl font-semibold">{matches.length}</p>
-          <p className="mt-2 text-sm text-slate-600">Pełny terminarz turnieju.</p>
+          <p className="mt-2 text-sm text-slate-600">
+            Pełny terminarz turnieju.
+          </p>
         </div>
         <div className="wc-hero-card rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <p className="text-sm font-medium text-slate-500">Grupy</p>
@@ -222,7 +205,9 @@ export default async function MatchCenterPage() {
         <div className="wc-hero-card rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <p className="text-sm font-medium text-slate-500">Z wynikami</p>
           <p className="mt-2 text-3xl font-semibold">{playedMatchesCount}</p>
-          <p className="mt-2 text-sm text-slate-600">Wyniki wpisane przez admina.</p>
+          <p className="mt-2 text-sm text-slate-600">
+            Wyniki z SofaScore lub wpisane przez admina.
+          </p>
         </div>
       </section>
 
@@ -282,6 +267,7 @@ export default async function MatchCenterPage() {
                       <p className="mt-1 text-sm text-slate-600">
                         Typy graczy: {match._count.predictions}
                       </p>
+                      <MatchQuestionBlock match={match} />
                     </div>
                     <span className="rounded-md bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700">
                       {getMatchStatus(match)}
@@ -328,8 +314,8 @@ export default async function MatchCenterPage() {
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
               W fazie grupowej jest 12 grup po 4 drużyny. Do 1/16 finału
               awansują dwie najlepsze drużyny z każdej grupy oraz osiem
-              najlepszych drużyn z trzecich miejsc. Tabele poniżej liczą się z
-              wyników wpisanych w aplikacji.
+              najlepszych drużyn z trzecich miejsc. Tabele poniżej są
+              oficjalnymi widgetami SofaScore.
             </p>
           </div>
           <a
@@ -347,21 +333,17 @@ export default async function MatchCenterPage() {
         <div className="mb-4">
           <p className="text-sm font-medium text-emerald-700">Grupy</p>
           <h2 className="text-2xl font-semibold tracking-tight">
-            Tabele i mecze grupowe
+            Tabele SofaScore i mecze grupowe
           </h2>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
-          {groups.map((group) => {
-            const standings = buildGroupStandings(
-              teamsByGroup[group] ?? [],
-              matchesByGroup[group] ?? [],
-            );
-            const groupMatches = matchesByGroup[group] ?? [];
+          {SOFASCORE_GROUP_WIDGETS.map((widget) => {
+            const groupMatches = matchesByGroup[widget.group] ?? [];
 
             return (
               <article
-                key={group}
+                key={widget.group}
                 className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
               >
                 <div className="mb-4 flex items-center justify-between gap-4">
@@ -369,75 +351,30 @@ export default async function MatchCenterPage() {
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                       Grupa
                     </p>
-                    <h3 className="text-xl font-semibold">Grupa {group}</h3>
+                    <h3 className="text-xl font-semibold">
+                      Grupa {widget.group}
+                    </h3>
                   </div>
                   <span className="rounded-md bg-slate-50 px-3 py-2 text-sm font-medium text-slate-600">
                     {groupMatches.length} meczów
                   </span>
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[520px] text-sm">
-                    <thead>
-                      <tr className="border-b border-slate-100 text-left text-xs uppercase tracking-wide text-slate-500">
-                        <th className="py-2 pr-3">#</th>
-                        <th className="py-2 pr-3">Drużyna</th>
-                        <th className="py-2 pr-3 text-center">M</th>
-                        <th className="py-2 pr-3 text-center">B</th>
-                        <th className="py-2 pr-3 text-center">+/-</th>
-                        <th className="py-2 text-right">Pkt</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {standings.map((row, index) => (
-                        <tr
-                          key={row.team.id}
-                          className="border-b border-slate-50 last:border-0"
-                        >
-                          <td className="py-2 pr-3 text-slate-500">
-                            {index + 1}
-                          </td>
-                          <td className="py-2 pr-3 font-medium">
-                            <TeamLine
-                              name={row.team.name}
-                              flagUrl={row.team.flagUrl}
-                            />
-                          </td>
-                          <td className="py-2 pr-3 text-center">
-                            {row.played}
-                          </td>
-                          <td className="py-2 pr-3 text-center">
-                            {row.goalsFor}:{row.goalsAgainst}
-                          </td>
-                          <td className="py-2 pr-3 text-center">
-                            {row.goalDifference > 0 ? "+" : ""}
-                            {row.goalDifference}
-                          </td>
-                          <td className="py-2 text-right font-semibold">
-                            {row.points}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <SofaScoreGroupWidget {...widget} />
 
                 <div className="mt-5 space-y-2 border-t border-slate-100 pt-4">
-                  {groupMatches.map((match) => (
-                    <Link
-                      key={match.id}
-                      href={`/matches/${match.id}`}
-                      className="flex flex-wrap items-center justify-between gap-3 rounded-md bg-slate-50 px-3 py-2 text-sm transition hover:bg-slate-100"
-                    >
-                      <span className="font-medium">
-                        {match.homeTeam.name} vs {match.awayTeam.name}
-                      </span>
-                      <span className="text-slate-500">
-                        {match.homeScore ?? "-"}:{match.awayScore ?? "-"} ·{" "}
-                        {formatMatchDate(match.startsAt)}
-                      </span>
-                    </Link>
-                  ))}
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Mecze w aplikacji
+                  </p>
+                  {groupMatches.length > 0 ? (
+                    groupMatches.map((match) => (
+                      <MatchListItem key={match.id} match={match} />
+                    ))
+                  ) : (
+                    <p className="rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-500">
+                      Brak meczów tej grupy w terminarzu aplikacji.
+                    </p>
+                  )}
                 </div>
               </article>
             );
@@ -495,6 +432,7 @@ export default async function MatchCenterPage() {
                   <p className="mt-1 text-sm text-slate-600">
                     Typy graczy: {match._count.predictions}
                   </p>
+                  <MatchQuestionBlock match={match} />
                 </div>
 
                 <span

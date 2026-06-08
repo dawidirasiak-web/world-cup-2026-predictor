@@ -19,7 +19,7 @@ export function RegisterForm() {
         </p>
       ) : null}
       <label className="block text-sm font-medium text-slate-700">
-        Nazwa gracza
+        Nick gracza
         <input
           name="name"
           required
@@ -27,6 +27,26 @@ export function RegisterForm() {
           className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-slate-900"
         />
       </label>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block text-sm font-medium text-slate-700">
+          Imię
+          <input
+            name="firstName"
+            required
+            minLength={2}
+            className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-slate-900"
+          />
+        </label>
+        <label className="block text-sm font-medium text-slate-700">
+          Nazwisko
+          <input
+            name="lastName"
+            required
+            minLength={2}
+            className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-slate-900"
+          />
+        </label>
+      </div>
       <label className="block text-sm font-medium text-slate-700">
         Email
         <input

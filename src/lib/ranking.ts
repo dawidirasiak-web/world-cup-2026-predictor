@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { formatPlayerName } from "@/lib/player-name";
 
 export async function getRanking() {
   const users = await prisma.user.findMany({
@@ -40,7 +41,7 @@ export async function getRanking() {
       return {
         id: user.id,
         name: user.name,
-        role: user.role,
+        playerName: formatPlayerName(user),
         matchScorePoints,
         matchQuestionPoints,
         matchTotalPoints,

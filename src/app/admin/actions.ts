@@ -4,7 +4,10 @@ import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "@/lib/auth";
-import { recalculateMatchPredictions } from "@/lib/match-points";
+import {
+  recalculateMatchPredictions,
+  updateMatchResultAndRecalculate,
+} from "@/lib/match-points";
 import { prisma } from "@/lib/prisma";
 
 const yesNoAnswerSchema = z.enum(["Tak", "Nie", ""]);
@@ -13,6 +16,11 @@ const tournamentResultSchema = z.object({
   finalistTwoTeamId: z.string().optional(),
   topScorer: z.string().trim().optional(),
   topScorerGoals: z.coerce.number().int().min(0).max(99).optional(),
+});
+const matchResultSchema = z.object({
+  matchId: z.string().min(1),
+  homeScore: z.coerce.number().int().min(0).max(30).optional(),
+  awayScore: z.coerce.number().int().min(0).max(30).optional(),
 });
 
 async function requireAdmin() {
@@ -138,6 +146,62 @@ export async function saveMatchQuestionAnswer(formData: FormData) {
   revalidatePath("/dashboard");
   revalidatePath("/ranking");
   revalidatePath("/matches");
+}
+
+export async function saveMatchResult(formData: FormData) {
+  await requireAdmin();
+
+  const raw = Object.fromEntries(formData);
+  const parsed = matchResultSchema.safeParse({
+    ...raw,
+    homeScore:
+      raw.homeScore === "" || raw.homeScore === undefined
+        ? undefined
+        : raw.homeScore,
+    awayScore:
+      raw.awayScore === "" || raw.awayScore === undefined
+        ? undefined
+        : raw.awayScore,
+  });
+
+  if (!parsed.success) {
+    throw new Error("Niepoprawny wynik meczu.");
+  }
+
+  const hasHomeScore = typeof parsed.data.homeScore === "number";
+  const hasAwayScore = typeof parsed.data.awayScore === "number";
+
+  if (hasHomeScore !== hasAwayScore) {
+    throw new Error("Wpisz oba wyniki albo zostaw oba pola puste.");
+  }
+
+  await prisma.$transaction(async (transaction) => {
+    if (!hasHomeScore || !hasAwayScore) {
+      await transaction.match.update({
+        where: { id: parsed.data.matchId },
+        data: {
+          homeScore: null,
+          awayScore: null,
+          status: "SCHEDULED",
+        },
+      });
+      await recalculateMatchPredictions(transaction, parsed.data.matchId);
+      return;
+    }
+
+    await updateMatchResultAndRecalculate(transaction, {
+      matchId: parsed.data.matchId,
+      homeScore: parsed.data.homeScore!,
+      awayScore: parsed.data.awayScore!,
+      status: "FINISHED",
+    });
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/dashboard");
+  revalidatePath("/ranking");
+  revalidatePath("/matches");
+  revalidatePath("/match-center");
 }
 
 export async function savePreTournamentQuestionAnswer(formData: FormData) {

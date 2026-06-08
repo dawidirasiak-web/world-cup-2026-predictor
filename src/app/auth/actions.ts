@@ -8,7 +8,9 @@ import { hashPassword } from "@/lib/password";
 import { sendPasswordResetEmail } from "@/lib/mail";
 
 const registerSchema = z.object({
-  name: z.string().trim().min(2, "Podaj imie lub nazwe gracza."),
+  name: z.string().trim().min(2, "Podaj nick gracza."),
+  firstName: z.string().trim().min(2, "Podaj imie."),
+  lastName: z.string().trim().min(2, "Podaj nazwisko."),
   email: z.string().trim().email("Podaj poprawny email."),
   password: z.string().min(8, "Haslo musi miec co najmniej 8 znakow."),
 });
@@ -59,6 +61,8 @@ export async function registerUser(
   await prisma.user.create({
     data: {
       name: parsed.data.name,
+      firstName: parsed.data.firstName,
+      lastName: parsed.data.lastName,
       email,
       passwordHash: await hashPassword(parsed.data.password),
     },

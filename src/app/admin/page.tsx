@@ -5,6 +5,7 @@ import { SignOutButton } from "@/components/auth/sign-out-button";
 import { TeamLine } from "@/components/matches/team-line";
 import {
   saveMatchQuestionAnswer,
+  saveMatchResult,
   savePreTournamentQuestionAnswer,
   saveTournamentResult,
 } from "@/app/admin/actions";
@@ -264,14 +265,10 @@ export default async function AdminPage() {
         </div>
         <div className="space-y-3">
           {matches.map((match) => (
-            <form
+            <article
               key={match.id}
-              action={saveMatchQuestionAnswer}
               className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
             >
-              {match.question ? (
-                <input type="hidden" name="questionId" value={match.question.id} />
-              ) : null}
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="max-w-3xl">
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -296,18 +293,67 @@ export default async function AdminPage() {
                     Typy graczy: {match._count.predictions}
                   </p>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
+                <form
+                  action={saveMatchQuestionAnswer}
+                  className="flex flex-wrap items-center gap-2"
+                >
+                  {match.question ? (
+                    <input
+                      type="hidden"
+                      name="questionId"
+                      value={match.question.id}
+                    />
+                  ) : null}
                   <AnswerSelect defaultValue={match.question?.correctAnswer} />
                   <button
                     type="submit"
                     disabled={!match.question}
                     className="rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
                   >
-                    Zapisz
+                    Zapisz odpowiedź
                   </button>
-                </div>
+                </form>
               </div>
-            </form>
+              <form
+                action={saveMatchResult}
+                className="mt-5 flex flex-wrap items-end justify-between gap-4 border-t border-slate-100 pt-4"
+              >
+                <input type="hidden" name="matchId" value={match.id} />
+                <div className="flex flex-wrap items-end gap-3">
+                  <label className="block text-sm font-medium text-slate-700">
+                    {match.homeTeam.name}
+                    <input
+                      name="homeScore"
+                      type="number"
+                      min={0}
+                      max={30}
+                      defaultValue={match.homeScore ?? ""}
+                      className="mt-2 w-24 rounded-md border border-slate-300 px-3 py-2 text-center outline-none focus:border-slate-900"
+                    />
+                  </label>
+                  <span className="pb-2 text-lg font-semibold text-slate-400">
+                    :
+                  </span>
+                  <label className="block text-sm font-medium text-slate-700">
+                    {match.awayTeam.name}
+                    <input
+                      name="awayScore"
+                      type="number"
+                      min={0}
+                      max={30}
+                      defaultValue={match.awayScore ?? ""}
+                      className="mt-2 w-24 rounded-md border border-slate-300 px-3 py-2 text-center outline-none focus:border-slate-900"
+                    />
+                  </label>
+                </div>
+                <button
+                  type="submit"
+                  className="rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                >
+                  Zapisz wynik
+                </button>
+              </form>
+            </article>
           ))}
         </div>
       </section>

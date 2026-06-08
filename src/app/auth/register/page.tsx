@@ -8,7 +8,7 @@ export default function RegisterPage() {
         <p className="wc-kicker mb-3">Mundial 2026</p>
         <h1 className="text-2xl font-semibold tracking-tight">Rejestracja</h1>
         <p className="mt-2 text-sm text-slate-600">
-          Nowe konto otrzymuje rolę USER. Rolę ADMIN można nadać w bazie.
+          Utwórz konto gracza, żeby typować mecze i śledzić ranking.
         </p>
         <RegisterForm />
         <p className="mt-6 text-sm text-slate-600">

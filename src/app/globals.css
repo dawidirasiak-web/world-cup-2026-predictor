@@ -221,6 +221,7 @@ body {
 .wc-hero-card::after {
   position: absolute;
   inset: auto -18px -26px auto;
+  pointer-events: none;
   width: 150px;
   height: 150px;
   border: 22px solid rgba(40, 76, 255, 0.16);

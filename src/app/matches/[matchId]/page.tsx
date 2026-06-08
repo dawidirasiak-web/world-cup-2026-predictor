@@ -8,8 +8,13 @@ import { TeamLine } from "@/components/matches/team-line";
 import { authOptions } from "@/lib/auth";
 import { getExternalStatsUrl } from "@/lib/external-stats";
 import { formatMatchDate, phaseLabel } from "@/lib/format";
+import { formatPlayerName } from "@/lib/player-name";
 import { isMatchPredictionOpen } from "@/lib/prediction-lock";
 import { prisma } from "@/lib/prisma";
+
+function formatQuestionAnswer(answer?: string | null) {
+  return answer ? answer : "brak odpowiedzi";
+}
 
 export default async function MatchPage({
   params,
@@ -37,6 +42,8 @@ export default async function MatchPage({
             select: {
               id: true,
               name: true,
+              firstName: true,
+              lastName: true,
               role: true,
             },
           },
@@ -120,8 +127,9 @@ export default async function MatchPage({
       </section>
 
       <section className="grid gap-5 lg:grid-cols-[1fr_0.85fr]">
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-5 flex items-center justify-between gap-4">
+        <div className="space-y-5">
+          <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="mb-5 flex items-center justify-between gap-4">
             <h2 className="text-xl font-semibold">Twój typ</h2>
             <span
               className={`rounded-md px-3 py-1 text-sm font-medium ${
@@ -132,20 +140,18 @@ export default async function MatchPage({
             >
               {isOpen ? "Typowanie otwarte" : "Typowanie zamknięte"}
             </span>
-          </div>
-          <MatchPredictionForm
-            matchId={match.id}
-            homeTeamName={match.homeTeam.name}
-            awayTeamName={match.awayTeam.name}
-            question={match.question?.question}
-            defaultHomeScore={prediction?.predictedHomeScore}
-            defaultAwayScore={prediction?.predictedAwayScore}
-            defaultQuestionAnswer={prediction?.questionAnswer}
-            disabled={!isOpen}
-          />
-        </div>
-
-        <div className="space-y-5">
+            </div>
+            <MatchPredictionForm
+              matchId={match.id}
+              homeTeamName={match.homeTeam.name}
+              awayTeamName={match.awayTeam.name}
+              question={match.question?.question}
+              defaultHomeScore={prediction?.predictedHomeScore}
+              defaultAwayScore={prediction?.predictedAwayScore}
+              defaultQuestionAnswer={prediction?.questionAnswer}
+              disabled={!isOpen}
+            />
+          </section>
           <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-xl font-semibold">Typy innych graczy</h2>
             <p className="mt-2 text-sm text-slate-600">
@@ -160,7 +166,14 @@ export default async function MatchPage({
                   >
                     <div>
                       <p className="font-medium">{item.user.name}</p>
-                      <p className="text-xs text-slate-500">{item.user.role}</p>
+                      <p className="text-xs text-slate-500">
+                        {formatPlayerName(item.user)}
+                      </p>
+                      {match.question ? (
+                        <p className="mt-2 inline-flex rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-800">
+                          Pytanie: {formatQuestionAnswer(item.questionAnswer)}
+                        </p>
+                      ) : null}
                     </div>
                     <p className="text-lg font-semibold">
                       {item.predictedHomeScore}:{item.predictedAwayScore}
@@ -175,6 +188,9 @@ export default async function MatchPage({
             </div>
           </section>
 
+        </div>
+
+        <div>
           <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-xl font-semibold">Składy SofaScore</h2>
             <ExternalMatchStats matchId={match.id} externalStatsUrl={sofaScoreUrl} />

@@ -68,6 +68,15 @@ export function SignInForm() {
           className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-slate-900"
         />
       </label>
+      <label className="flex items-center gap-3 text-sm font-medium text-slate-700">
+        <input
+          name="remember"
+          type="checkbox"
+          defaultChecked
+          className="h-4 w-4 accent-slate-950"
+        />
+        Nie wylogowuj mnie
+      </label>
       <button
         type="submit"
         disabled={isPending}

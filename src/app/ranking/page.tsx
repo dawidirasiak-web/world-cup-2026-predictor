@@ -43,7 +43,7 @@ export default async function RankingPage() {
             </p>
             <h2 className="mt-2 text-xl font-semibold">{player.name}</h2>
             <p className="mt-1 text-xs font-medium uppercase text-slate-500">
-              {player.role}
+              {player.playerName}
             </p>
             <p className="mt-4 text-3xl font-semibold">
               {player.totalPoints} pkt
@@ -70,7 +70,9 @@ export default async function RankingPage() {
                 <td className="px-4 py-3 font-semibold">{player.position}</td>
                 <td className="px-4 py-3">
                   <div className="font-medium">{player.name}</div>
-                  <div className="text-xs text-slate-500">{player.role}</div>
+                  <div className="text-xs text-slate-500">
+                    {player.playerName}
+                  </div>
                 </td>
                 <td className="px-4 py-3">{player.matchScorePoints}</td>
                 <td className="px-4 py-3">{player.matchQuestionPoints}</td>

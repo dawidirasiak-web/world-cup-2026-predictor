@@ -7,6 +7,7 @@ import { authOptions } from "@/lib/auth";
 import { getLocalDayRange } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { getRanking } from "@/lib/ranking";
+import { formatPlayerName } from "@/lib/player-name";
 
 function formatAverage(value: number) {
   return new Intl.NumberFormat("pl-PL", {
@@ -197,6 +198,12 @@ export default async function DashboardPage() {
         questionPoints: true,
         totalPoints: true,
         questionAnswer: true,
+        match: {
+          select: {
+            homeScore: true,
+            awayScore: true,
+          },
+        },
       },
     }),
     prisma.preTournamentPrediction.findUnique({
@@ -209,6 +216,10 @@ export default async function DashboardPage() {
 
   const userRank = ranking.find((player) => player.id === session.user.id);
   const predictedMatchesCount = userMatchPredictions.length;
+  const settledPredictions = userMatchPredictions.filter(
+    (prediction) =>
+      prediction.match.homeScore !== null && prediction.match.awayScore !== null,
+  );
   const matchScorePoints = userMatchPredictions.reduce(
     (sum, prediction) => sum + prediction.scorePoints,
     0,
@@ -223,8 +234,14 @@ export default async function DashboardPage() {
   );
   const preTournamentPoints = userPreTournamentPrediction?.totalPoints ?? 0;
   const totalPoints = matchTotalPoints + preTournamentPoints;
+  const settledMatchTotalPoints = settledPredictions.reduce(
+    (sum, prediction) => sum + prediction.totalPoints,
+    0,
+  );
   const averagePerPredictedMatch =
-    predictedMatchesCount > 0 ? matchTotalPoints / predictedMatchesCount : 0;
+    settledPredictions.length > 0
+      ? settledMatchTotalPoints / settledPredictions.length
+      : 0;
   const questionAnswersCount = userMatchPredictions.filter(
     (prediction) => prediction.questionAnswer,
   ).length;
@@ -244,7 +261,11 @@ export default async function DashboardPage() {
       <header className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-6">
         <div>
           <p className="wc-kicker">
-            {session.user.role}
+            {formatPlayerName({
+              name: session.user.name ?? "Gracz",
+              firstName: session.user.firstName,
+              lastName: session.user.lastName,
+            })}
           </p>
           <h1 className="text-3xl font-semibold tracking-tight">
             Witaj, {session.user.name}
@@ -337,7 +358,7 @@ export default async function DashboardPage() {
           <StatTile
             label="Średnia na mecz"
             value={formatAverage(averagePerPredictedMatch)}
-            detail="Na obstawiony mecz"
+            detail="Na rozliczony mecz"
           />
           <StatTile
             label="Pytania meczowe"

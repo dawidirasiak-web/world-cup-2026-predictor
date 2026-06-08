@@ -11,9 +11,19 @@ const adapter = new PrismaPg({
 
 const cachedPrisma = globalForPrisma.prisma;
 const cachedPrismaRuntime = cachedPrisma as
-  | (PrismaClient & { tournamentResult?: unknown })
+  | (PrismaClient & {
+      tournamentResult?: unknown;
+      user?: {
+        fields?: {
+          firstName?: unknown;
+        };
+      };
+    })
   | undefined;
-const hasCurrentSchema = Boolean(cachedPrismaRuntime?.tournamentResult);
+const hasCurrentSchema = Boolean(
+  cachedPrismaRuntime?.tournamentResult &&
+    cachedPrismaRuntime?.user?.fields?.firstName,
+);
 
 if (cachedPrisma && !hasCurrentSchema) {
   void cachedPrisma.$disconnect();
