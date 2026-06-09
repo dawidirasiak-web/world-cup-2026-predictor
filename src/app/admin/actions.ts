@@ -110,6 +110,79 @@ async function recalculatePreTournamentPrediction(
   });
 }
 
+async function recalculateAllPreTournamentPredictions(
+  transaction: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+) {
+  const [result, predictions] = await Promise.all([
+    transaction.tournamentResult.findUnique({
+      where: { id: "world-cup-2026" },
+      select: {
+        finalistOneTeamId: true,
+        finalistTwoTeamId: true,
+        topScorer: true,
+        topScorerGoals: true,
+      },
+    }),
+    transaction.preTournamentPrediction.findMany({
+      select: {
+        id: true,
+        finalistOneTeamId: true,
+        finalistTwoTeamId: true,
+        topScorer: true,
+        topScorerGoals: true,
+        answers: {
+          select: { points: true },
+        },
+      },
+    }),
+  ]);
+
+  const correctFinalists = [
+    result?.finalistOneTeamId,
+    result?.finalistTwoTeamId,
+  ].filter(Boolean);
+
+  for (const prediction of predictions) {
+    const predictedFinalists = [
+      prediction.finalistOneTeamId,
+      prediction.finalistTwoTeamId,
+    ];
+    const finalistPoints = predictedFinalists.reduce(
+      (sum, teamId) => sum + (correctFinalists.includes(teamId) ? 15 : 0),
+      0,
+    );
+    const topScorerPoints =
+      result?.topScorer &&
+      normalizeAnswer(prediction.topScorer) === normalizeAnswer(result.topScorer)
+        ? 20
+        : 0;
+    const topScorerGoalsPoints =
+      typeof result?.topScorerGoals === "number" &&
+      prediction.topScorerGoals === result.topScorerGoals
+        ? 10
+        : 0;
+    const questionPoints = prediction.answers.reduce(
+      (sum, answer) => sum + answer.points,
+      0,
+    );
+
+    await transaction.preTournamentPrediction.update({
+      where: { id: prediction.id },
+      data: {
+        finalistPoints,
+        topScorerPoints,
+        topScorerGoalsPoints,
+        questionPoints,
+        totalPoints:
+          finalistPoints +
+          topScorerPoints +
+          topScorerGoalsPoints +
+          questionPoints,
+      },
+    });
+  }
+}
+
 export async function saveMatchQuestionAnswer(formData: FormData) {
   await requireAdmin();
 
@@ -314,13 +387,7 @@ export async function saveTournamentResult(formData: FormData) {
       },
     });
 
-    const predictions = await transaction.preTournamentPrediction.findMany({
-      select: { id: true },
-    });
-
-    for (const prediction of predictions) {
-      await recalculatePreTournamentPrediction(transaction, prediction.id);
-    }
+    await recalculateAllPreTournamentPredictions(transaction);
   });
 
   revalidatePath("/admin");

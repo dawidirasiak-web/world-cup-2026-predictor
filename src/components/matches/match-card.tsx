@@ -9,6 +9,8 @@ type MatchCardProps = {
     startsAt: Date;
     phase: string;
     group: string | null;
+    homeScore: number | null;
+    awayScore: number | null;
     homeTeam: {
       name: string;
       flagUrl: string | null;
@@ -23,13 +25,26 @@ type MatchCardProps = {
     } | null;
     question: {
       question: string;
+      correctAnswer: string | null;
     } | null;
     predictions: Array<{
       predictedHomeScore: number;
       predictedAwayScore: number;
+      questionAnswer: string | null;
+      scorePoints: number;
+      questionPoints: number;
+      totalPoints: number;
     }>;
   };
 };
+
+function formatQuestionAnswer(answer?: string | null) {
+  if (!answer) {
+    return "brak";
+  }
+
+  return answer.toLowerCase() === "yes" ? "Tak" : "Nie";
+}
 
 export function MatchCard({ match }: MatchCardProps) {
   const prediction = match.predictions[0];
@@ -86,13 +101,33 @@ export function MatchCard({ match }: MatchCardProps) {
         </div>
       ) : null}
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+      <div className="mt-4 flex flex-wrap items-start justify-between gap-3 border-t border-slate-100 pt-4">
         {prediction ? (
-          <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900 shadow-sm">
-            <span className="font-medium">Twój typ</span>
-            <span className="ml-2 rounded bg-white px-2 py-1 font-semibold text-slate-950">
-              {prediction.predictedHomeScore}:{prediction.predictedAwayScore}
-            </span>
+          <div className="flex w-full flex-wrap gap-2 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900 shadow-sm md:w-auto">
+            <div className="rounded bg-white px-3 py-2">
+              <p className="text-xs font-semibold uppercase text-emerald-700">
+                Twój wynik
+              </p>
+              <p className="mt-1 font-semibold text-slate-950">
+                {prediction.predictedHomeScore}:{prediction.predictedAwayScore}
+              </p>
+            </div>
+            <div className="rounded bg-white px-3 py-2">
+              <p className="text-xs font-semibold uppercase text-emerald-700">
+                Odpowiedź
+              </p>
+              <p className="mt-1 font-semibold text-slate-950">
+                {formatQuestionAnswer(prediction.questionAnswer)}
+              </p>
+            </div>
+            <div className="rounded bg-white px-3 py-2">
+              <p className="text-xs font-semibold uppercase text-emerald-700">
+                Razem
+              </p>
+              <p className="mt-1 font-semibold text-slate-950">
+                {prediction.totalPoints} pkt
+              </p>
+            </div>
           </div>
         ) : (
           <p className="text-sm text-slate-600">

@@ -106,7 +106,21 @@ export async function requestPasswordReset(
     },
   });
 
-  const resetEmail = await sendPasswordResetEmail(user.email, token);
+  const resetEmail = await sendPasswordResetEmail(user.email, token).catch(
+    (error) => {
+      console.error("Password reset email failed:", error);
+      return null;
+    },
+  );
+
+  if (!resetEmail) {
+    return {
+      ok: false,
+      message:
+        "Nie udalo sie wyslac maila resetujacego. Sprobuj ponownie pozniej.",
+    };
+  }
+
   const showLocalResetLink =
     process.env.NODE_ENV !== "production" && !resetEmail.sentByEmail;
 

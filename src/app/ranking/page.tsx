@@ -52,7 +52,47 @@ export default async function RankingPage() {
         ))}
       </section>
 
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <section className="space-y-3 md:hidden">
+        {ranking.map((player) => (
+          <article
+            key={player.id}
+            className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase text-slate-500">
+                  Miejsce #{player.position}
+                </p>
+                <h2 className="mt-1 font-semibold">{player.name}</h2>
+                <p className="text-xs text-slate-500">{player.playerName}</p>
+              </div>
+              <p className="text-xl font-semibold">{player.totalPoints} pkt</p>
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
+              <div className="rounded-md bg-slate-50 p-2">
+                <p className="text-slate-500">Wyniki</p>
+                <p className="mt-1 text-base font-semibold">
+                  {player.matchScorePoints}
+                </p>
+              </div>
+              <div className="rounded-md bg-slate-50 p-2">
+                <p className="text-slate-500">Pytania</p>
+                <p className="mt-1 text-base font-semibold">
+                  {player.matchQuestionPoints}
+                </p>
+              </div>
+              <div className="rounded-md bg-slate-50 p-2">
+                <p className="text-slate-500">Przedturn.</p>
+                <p className="mt-1 text-base font-semibold">
+                  {player.preTournamentPoints}
+                </p>
+              </div>
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <section className="hidden overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm md:block">
         <table className="w-full border-collapse text-left text-sm">
           <thead className="bg-slate-50 text-slate-600">
             <tr>

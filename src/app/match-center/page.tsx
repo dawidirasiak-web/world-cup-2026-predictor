@@ -12,18 +12,18 @@ const SOFASCORE_TOURNAMENT_URL =
   "https://www.sofascore.com/football/tournament/world/world-championship/16#id:58210";
 
 const SOFASCORE_GROUP_WIDGETS = [
-  { group: "A", tournamentId: 3954, slug: "world-championship-gr-a" },
-  { group: "B", tournamentId: 3955, slug: "world-championship-gr-b" },
-  { group: "C", tournamentId: 3956, slug: "world-championship-gr-c" },
-  { group: "D", tournamentId: 3957, slug: "world-championship-gr-d" },
-  { group: "E", tournamentId: 3958, slug: "world-championship-gr-e" },
-  { group: "F", tournamentId: 3959, slug: "world-championship-gr-f" },
-  { group: "G", tournamentId: 3960, slug: "world-championship-gr-g" },
-  { group: "H", tournamentId: 3961, slug: "world-championship-gr-h" },
-  { group: "I", tournamentId: 139403, slug: "world-championship-gr-i" },
-  { group: "J", tournamentId: 139404, slug: "world-championship-gr-j" },
-  { group: "K", tournamentId: 139405, slug: "world-championship-gr-k" },
-  { group: "L", tournamentId: 139406, slug: "world-championship-gr-l" },
+  { group: "A", tournamentId: 3954 },
+  { group: "B", tournamentId: 3955 },
+  { group: "C", tournamentId: 3956 },
+  { group: "D", tournamentId: 3957 },
+  { group: "E", tournamentId: 3958 },
+  { group: "F", tournamentId: 3959 },
+  { group: "G", tournamentId: 3960 },
+  { group: "H", tournamentId: 3961 },
+  { group: "I", tournamentId: 139403 },
+  { group: "J", tournamentId: 139404 },
+  { group: "K", tournamentId: 139405 },
+  { group: "L", tournamentId: 139406 },
 ];
 
 type MatchWithRelations = Awaited<ReturnType<typeof getMatches>>[number];
@@ -42,6 +42,7 @@ async function getMatches(userId: string) {
           predictedHomeScore: true,
           predictedAwayScore: true,
           questionAnswer: true,
+          totalPoints: true,
         },
       },
       _count: {
@@ -49,10 +50,6 @@ async function getMatches(userId: string) {
       },
     },
   });
-}
-
-function formatCorrectAnswer(answer?: string | null) {
-  return answer ? `Poprawna odpowiedź: ${answer}` : "Poprawna odpowiedź: brak";
 }
 
 function getMatchStatus(match: {
@@ -88,6 +85,14 @@ function groupBy<T>(
   }, {});
 }
 
+function formatUserQuestionAnswer(answer?: string | null) {
+  if (!answer) {
+    return "brak";
+  }
+
+  return answer.toLowerCase() === "yes" ? "Tak" : "Nie";
+}
+
 function SofaScoreGroupWidget({
   group,
   tournamentId,
@@ -121,20 +126,9 @@ function MatchQuestionBlock({ match }: { match: MatchWithRelations }) {
 
   return (
     <p className="mt-2 rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-700">
-      {match.question.question}{" "}
-      <span className="font-semibold">
-        {formatCorrectAnswer(match.question.correctAnswer)}
-      </span>
+      {match.question.question}
     </p>
   );
-}
-
-function formatUserQuestionAnswer(answer?: string | null) {
-  if (!answer) {
-    return "brak";
-  }
-
-  return answer.toLowerCase() === "yes" ? "Tak" : "Nie";
 }
 
 function UserPredictionBlock({ match }: { match: MatchWithRelations }) {
@@ -157,9 +151,15 @@ function UserPredictionBlock({ match }: { match: MatchWithRelations }) {
         </strong>
       </span>
       <span className="inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800">
-        Pytanie
+        Odpowiedź
         <strong className="rounded bg-white px-2 py-1 text-slate-950">
           {formatUserQuestionAnswer(prediction.questionAnswer)}
+        </strong>
+      </span>
+      <span className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-slate-950 px-3 py-2 text-sm font-medium text-white">
+        Razem
+        <strong className="rounded bg-white px-2 py-1 text-slate-950">
+          {prediction.totalPoints} pkt
         </strong>
       </span>
     </div>
@@ -182,6 +182,74 @@ function MatchListItem({ match }: { match: MatchWithRelations }) {
         </span>
       </span>
     </Link>
+  );
+}
+
+function MatchCenterCard({ match }: { match: MatchWithRelations }) {
+  const status = getMatchStatus(match);
+  const statsUrl = getExternalStatsUrl({
+    externalStatsUrl: match.externalStatsUrl,
+    matchNumber: match.displayOrder,
+    homeTeam: match.homeTeam.name,
+    awayTeam: match.awayTeam.name,
+  });
+
+  return (
+    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            {phaseLabel(match.phase)} · {match.group ?? "Mecz"} · mecz{" "}
+            {match.displayOrder}
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xl font-semibold">
+            <TeamLine name={match.homeTeam.name} flagUrl={match.homeTeam.flagUrl} />
+            <span className="text-slate-400">
+              {match.homeScore ?? "-"}:{match.awayScore ?? "-"}
+            </span>
+            <TeamLine name={match.awayTeam.name} flagUrl={match.awayTeam.flagUrl} />
+          </div>
+          <p className="mt-2 text-sm text-slate-600">
+            {formatMatchDate(match.startsAt)} ·{" "}
+            {match.stadium
+              ? `${match.stadium.name}, ${match.stadium.city}`
+              : "Stadion do potwierdzenia"}
+          </p>
+          <p className="mt-1 text-sm text-slate-600">
+            Typy graczy: {match._count.predictions}
+          </p>
+          <MatchQuestionBlock match={match} />
+          <UserPredictionBlock match={match} />
+        </div>
+
+        <span
+          className={
+            status === "Zakończony"
+              ? "rounded-md bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700"
+              : "rounded-md bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700"
+          }
+        >
+          {status}
+        </span>
+      </div>
+
+      <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+        <Link
+          href={`/matches/${match.id}`}
+          className="rounded-md bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+        >
+          Szczegóły
+        </Link>
+        <a
+          href={statsUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="rounded-md border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+        >
+          SofaScore
+        </a>
+      </div>
+    </article>
   );
 }
 
@@ -271,74 +339,9 @@ export default async function MatchCenterPage() {
 
         {todayMatches.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2">
-            {todayMatches.map((match) => {
-              const statsUrl = getExternalStatsUrl({
-                externalStatsUrl: match.externalStatsUrl,
-                matchNumber: match.displayOrder,
-                homeTeam: match.homeTeam.name,
-                awayTeam: match.awayTeam.name,
-              });
-
-              return (
-                <article
-                  key={match.id}
-                  className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        {phaseLabel(match.phase)} · {match.group ?? "Mecz"} ·
-                        mecz {match.displayOrder}
-                      </p>
-                      <div className="mt-3 flex flex-wrap items-center gap-2 text-xl font-semibold">
-                        <TeamLine
-                          name={match.homeTeam.name}
-                          flagUrl={match.homeTeam.flagUrl}
-                        />
-                        <span className="text-slate-400">
-                          {match.homeScore ?? "-"}:{match.awayScore ?? "-"}
-                        </span>
-                        <TeamLine
-                          name={match.awayTeam.name}
-                          flagUrl={match.awayTeam.flagUrl}
-                        />
-                      </div>
-                      <p className="mt-2 text-sm text-slate-600">
-                        {formatMatchDate(match.startsAt)} ·{" "}
-                        {match.stadium
-                          ? `${match.stadium.name}, ${match.stadium.city}`
-                          : "Stadion do potwierdzenia"}
-                      </p>
-                      <p className="mt-1 text-sm text-slate-600">
-                        Typy graczy: {match._count.predictions}
-                      </p>
-                      <MatchQuestionBlock match={match} />
-                      <UserPredictionBlock match={match} />
-                    </div>
-                    <span className="rounded-md bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700">
-                      {getMatchStatus(match)}
-                    </span>
-                  </div>
-
-                  <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
-                    <Link
-                      href={`/matches/${match.id}`}
-                      className="rounded-md bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
-                    >
-                      Szczegóły
-                    </Link>
-                    <a
-                      href={statsUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="rounded-md border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                    >
-                      SofaScore
-                    </a>
-                  </div>
-                </article>
-              );
-            })}
+            {todayMatches.map((match) => (
+              <MatchCenterCard key={match.id} match={match} />
+            ))}
           </div>
         ) : (
           <div className="rounded-lg border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-sm">
@@ -436,82 +439,9 @@ export default async function MatchCenterPage() {
           </h2>
         </div>
 
-        {matches.map((match) => {
-          const status = getMatchStatus(match);
-          const statsUrl = getExternalStatsUrl({
-            externalStatsUrl: match.externalStatsUrl,
-            matchNumber: match.displayOrder,
-            homeTeam: match.homeTeam.name,
-            awayTeam: match.awayTeam.name,
-          });
-
-          return (
-            <article
-              key={match.id}
-              className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
-            >
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    {phaseLabel(match.phase)} · {match.group ?? "Mecz"} · mecz{" "}
-                    {match.displayOrder}
-                  </p>
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xl font-semibold">
-                    <TeamLine
-                      name={match.homeTeam.name}
-                      flagUrl={match.homeTeam.flagUrl}
-                    />
-                    <span className="text-slate-400">
-                      {match.homeScore ?? "-"}:{match.awayScore ?? "-"}
-                    </span>
-                    <TeamLine
-                      name={match.awayTeam.name}
-                      flagUrl={match.awayTeam.flagUrl}
-                    />
-                  </div>
-                  <p className="mt-2 text-sm text-slate-600">
-                    {formatMatchDate(match.startsAt)} ·{" "}
-                    {match.stadium
-                      ? `${match.stadium.name}, ${match.stadium.city}`
-                      : "Stadion do potwierdzenia"}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    Typy graczy: {match._count.predictions}
-                  </p>
-                  <MatchQuestionBlock match={match} />
-                  <UserPredictionBlock match={match} />
-                </div>
-
-                <span
-                  className={
-                    status === "Zakończony"
-                      ? "rounded-md bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700"
-                      : "rounded-md bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700"
-                  }
-                >
-                  {status}
-                </span>
-              </div>
-
-              <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
-                <Link
-                  href={`/matches/${match.id}`}
-                  className="rounded-md bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
-                >
-                  Szczegóły
-                </Link>
-                <a
-                  href={statsUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-md border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                >
-                  SofaScore
-                </a>
-              </div>
-            </article>
-          );
-        })}
+        {matches.map((match) => (
+          <MatchCenterCard key={match.id} match={match} />
+        ))}
       </section>
     </main>
   );

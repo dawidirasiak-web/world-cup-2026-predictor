@@ -151,6 +151,28 @@ export default async function MatchPage({
               defaultQuestionAnswer={prediction?.questionAnswer}
               disabled={!isOpen}
             />
+            {prediction ? (
+              <div className="mt-4 grid gap-2 border-t border-slate-100 pt-4 text-sm sm:grid-cols-3">
+                <div className="rounded-md bg-slate-50 p-3">
+                  <p className="text-slate-500">Punkty za wynik</p>
+                  <p className="mt-1 text-lg font-semibold">
+                    {prediction.scorePoints}
+                  </p>
+                </div>
+                <div className="rounded-md bg-slate-50 p-3">
+                  <p className="text-slate-500">Punkty za pytanie</p>
+                  <p className="mt-1 text-lg font-semibold">
+                    {prediction.questionPoints}
+                  </p>
+                </div>
+                <div className="rounded-md bg-slate-950 p-3 text-white">
+                  <p className="text-white/70">Razem</p>
+                  <p className="mt-1 text-lg font-semibold">
+                    {prediction.totalPoints} pkt
+                  </p>
+                </div>
+              </div>
+            ) : null}
           </section>
           <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-xl font-semibold">Typy innych graczy</h2>
@@ -175,9 +197,14 @@ export default async function MatchPage({
                         </p>
                       ) : null}
                     </div>
-                    <p className="text-lg font-semibold">
-                      {item.predictedHomeScore}:{item.predictedAwayScore}
-                    </p>
+                    <div className="text-right">
+                      <p className="text-lg font-semibold">
+                        {item.predictedHomeScore}:{item.predictedAwayScore}
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-emerald-700">
+                        {item.totalPoints} pkt
+                      </p>
+                    </div>
                   </div>
                 ))
               ) : (

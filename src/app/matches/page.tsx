@@ -25,6 +25,10 @@ export default async function MatchesPage() {
         select: {
           predictedHomeScore: true,
           predictedAwayScore: true,
+          questionAnswer: true,
+          scorePoints: true,
+          questionPoints: true,
+          totalPoints: true,
         },
       },
     },
