@@ -129,6 +129,35 @@ body {
   background: rgba(255, 255, 255, 0.12) !important;
 }
 
+@media (max-width: 640px) {
+  .wc-page main > header {
+    align-items: flex-start;
+  }
+
+  .wc-page main > header nav {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(auto-fit, minmax(116px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .wc-page main > header a,
+  .wc-page main > header button {
+    display: inline-flex;
+    width: 100%;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.94) !important;
+    color: var(--wc-ink) !important;
+  }
+
+  .wc-page main > header a:hover,
+  .wc-page main > header button:hover {
+    background: white !important;
+  }
+}
+
 .wc-page .bg-white {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.92)),
