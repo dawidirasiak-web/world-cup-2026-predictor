@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
+import { SOFASCORE_MATCH_LINKS_BY_MATCH_NUMBER } from "../src/lib/sofascore-links";
 import { getMatchQuestion } from "./match-questions";
 
 const prisma = new PrismaClient({
@@ -89,87 +90,23 @@ const stadiumAliases: Record<string, string> = {
   "Levi's Stadium": "Levi's Stadium",
 };
 
-const externalStatsUrlsByMatchNumber: Record<number, string> = {
-  1: "https://www.sofascore.com/football/match/mexico-south-africa/LUbsGVb#id:15186710",
-  2: "https://www.sofascore.com/football/match/south-korea-czechia/oUbsKUb#id:15186720",
-  3: "https://www.sofascore.com/football/match/canada-bosnia-and-herzegovina/EObscVb#id:15186836",
-  4: "https://www.sofascore.com/football/match/paraguay-usa/zUbsOVb#id:15186873",
-  5: "https://www.sofascore.com/football/match/morocco-brazil/YUbsDVb#id:15186850",
-  6: "https://www.sofascore.com/football/match/australia-turkiye/aUbsQUb#id:15186874",
-  7: "https://www.sofascore.com/football/match/haiti-scotland/VTbsEUc#id:15186853",
-  8: "https://www.sofascore.com/football/match/qatar-switzerland/ZTbsRVb#id:15186526",
-  9: "https://www.sofascore.com/football/match/curacao-germany/lUbsCqx#id:15186899",
-  10: "https://www.sofascore.com/football/match/cote-divoire-ecuador/hVbstVb#id:15186904",
-  11: "https://www.sofascore.com/football/match/japan-netherlands/fUbsvVb#id:15186945",
-  12: "https://www.sofascore.com/football/match/tunisia-sweden/NTbsEUb#id:15186951",
-  13: "https://www.sofascore.com/football/match/saudi-arabia-uruguay/AUbsJWb#id:15186811",
-  14: "https://www.sofascore.com/football/match/cabo-verde-spain/YTbsdVb#id:15186783",
-  15: "https://www.sofascore.com/football/match/new-zealand-iran/qVbsJVb#id:15186832",
-  16: "https://www.sofascore.com/football/match/egypt-belgium/rUbsiVb#id:15186837",
-  17: "https://www.sofascore.com/football/match/senegal-france/GObsOUb#id:15186501",
-  18: "https://www.sofascore.com/football/match/iraq-norway/AObsrVb#id:15186773",
-  19: "https://www.sofascore.com/football/match/jordan-austria/tUbswVb#id:15186751",
-  20: "https://www.sofascore.com/football/match/argentina-algeria/QTbsuWb#id:15186854",
-  21: "https://www.sofascore.com/football/match/croatia-england/nUbspUb#id:15186504",
-  22: "https://www.sofascore.com/football/match/panama-ghana/oVbsodc#id:15186687",
-  23: "https://www.sofascore.com/football/match/dr-congo-portugal/eUbsyWb#id:15186709",
-  24: "https://www.sofascore.com/football/match/colombia-uzbekistan/yUbsvWb#id:15186722",
-  42: "https://www.sofascore.com/football/match/senegal-norway/AObsOUb",
-};
+const externalStatsUrlsByMatchNumber = Object.fromEntries(
+  Object.entries(SOFASCORE_MATCH_LINKS_BY_MATCH_NUMBER).map(
+    ([matchNumber, link]) => [Number(matchNumber), link.url],
+  ),
+) as Record<number, string>;
 
-const sofaScoreEventIdsByMatchNumber: Record<number, string> = {
-  1: "15186710",
-  2: "15186720",
-  3: "15186836",
-  4: "15186873",
-  5: "15186850",
-  6: "15186874",
-  7: "15186853",
-  8: "15186526",
-  9: "15186899",
-  10: "15186904",
-  11: "15186945",
-  12: "15186951",
-  13: "15186811",
-  14: "15186783",
-  15: "15186832",
-  16: "15186837",
-  17: "15186501",
-  18: "15186773",
-  19: "15186751",
-  20: "15186854",
-  21: "15186504",
-  22: "15186687",
-  23: "15186709",
-  24: "15186722",
-};
+const sofaScoreEventIdsByMatchNumber = Object.fromEntries(
+  Object.entries(SOFASCORE_MATCH_LINKS_BY_MATCH_NUMBER).map(
+    ([matchNumber, link]) => [Number(matchNumber), link.eventId],
+  ),
+) as Record<number, string>;
 
-const sofaScoreWidgetUrlsByMatchNumber: Record<number, string> = {
-  1: "https://widgets.sofascore.com/embed/lineups?id=15186710&widgetTheme=light",
-  2: "https://widgets.sofascore.com/embed/lineups?id=15186720&widgetTheme=light",
-  3: "https://widgets.sofascore.com/embed/lineups?id=15186836&widgetTheme=light",
-  4: "https://widgets.sofascore.com/embed/lineups?id=15186873&widgetTheme=light",
-  5: "https://widgets.sofascore.com/embed/lineups?id=15186850&widgetTheme=light",
-  6: "https://widgets.sofascore.com/embed/lineups?id=15186874&widgetTheme=light",
-  7: "https://widgets.sofascore.com/embed/lineups?id=15186853&widgetTheme=light",
-  8: "https://widgets.sofascore.com/embed/lineups?id=15186526&widgetTheme=light",
-  9: "https://widgets.sofascore.com/embed/lineups?id=15186899&widgetTheme=light",
-  10: "https://widgets.sofascore.com/embed/lineups?id=15186904&widgetTheme=light",
-  11: "https://widgets.sofascore.com/embed/lineups?id=15186945&widgetTheme=light",
-  12: "https://widgets.sofascore.com/embed/lineups?id=15186951&widgetTheme=light",
-  13: "https://widgets.sofascore.com/embed/lineups?id=15186811&widgetTheme=light",
-  14: "https://widgets.sofascore.com/embed/lineups?id=15186783&widgetTheme=light",
-  15: "https://widgets.sofascore.com/embed/lineups?id=15186832&widgetTheme=light",
-  16: "https://widgets.sofascore.com/embed/lineups?id=15186837&widgetTheme=light",
-  17: "https://widgets.sofascore.com/embed/lineups?id=15186501&widgetTheme=light",
-  18: "https://widgets.sofascore.com/embed/lineups?id=15186773&widgetTheme=light",
-  19: "https://widgets.sofascore.com/embed/lineups?id=15186751&widgetTheme=light",
-  20: "https://widgets.sofascore.com/embed/lineups?id=15186854&widgetTheme=light",
-  21: "https://widgets.sofascore.com/embed/lineups?id=15186504&widgetTheme=light",
-  22: "https://widgets.sofascore.com/embed/lineups?id=15186687&widgetTheme=light",
-  23: "https://widgets.sofascore.com/embed/lineups?id=15186709&widgetTheme=light",
-  24: "https://widgets.sofascore.com/embed/lineups?id=15186722&widgetTheme=light",
-};
+const sofaScoreWidgetUrlsByMatchNumber = Object.fromEntries(
+  Object.entries(SOFASCORE_MATCH_LINKS_BY_MATCH_NUMBER).map(
+    ([matchNumber, link]) => [Number(matchNumber), link.widgetUrl],
+  ),
+) as Record<number, string>;
 
 const phaseByMatchNumber = (number: number) => {
   if (number <= 72) return "GROUP_STAGE" as const;
