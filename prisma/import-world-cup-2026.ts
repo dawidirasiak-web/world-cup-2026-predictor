@@ -108,6 +108,15 @@ const sofaScoreWidgetUrlsByMatchNumber = Object.fromEntries(
   ),
 ) as Record<number, string>;
 
+const flashscoreStartOverridesByMatchNumber: Record<number, string> = {
+  29: "2026-06-20T00:00:00+02:00",
+  33: "2026-06-20T22:00:00+02:00",
+  36: "2026-06-21T06:00:00+02:00",
+  39: "2026-06-21T21:00:00+02:00",
+  55: "2026-06-25T22:00:00+02:00",
+  56: "2026-06-25T22:00:00+02:00",
+};
+
 const phaseByMatchNumber = (number: number) => {
   if (number <= 72) return "GROUP_STAGE" as const;
   if (number <= 88) return "ROUND_OF_32" as const;
@@ -399,16 +408,21 @@ async function main() {
       where: { displayOrder: number },
     });
 
+    const parsedStartsAt = parseStartsAt(
+      positional[0],
+      positional[1],
+      positional[2],
+      positional[3],
+    );
+    const startsAt = flashscoreStartOverridesByMatchNumber[number]
+      ? new Date(flashscoreStartOverridesByMatchNumber[number])
+      : parsedStartsAt;
+
     const matchData = {
       homeTeamId: teamCache.get(homeCode)!.id,
       awayTeamId: teamCache.get(awayCode)!.id,
       stadiumId: stadiumCache.get(stadiumKey)!.id,
-      startsAt: parseStartsAt(
-        positional[0],
-        positional[1],
-        positional[2],
-        positional[3],
-      ),
+      startsAt,
       phase: phaseByMatchNumber(number),
       group: number <= 72 ? teamCache.get(homeCode)?.group ?? null : null,
       displayOrder: number,

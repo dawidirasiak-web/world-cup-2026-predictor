@@ -43,7 +43,17 @@ function formatQuestionAnswer(answer?: string | null) {
     return "brak";
   }
 
-  return answer.toLowerCase() === "yes" ? "Tak" : "Nie";
+  const normalized = answer.trim().toLowerCase();
+
+  if (normalized === "yes" || normalized === "tak") {
+    return "Tak";
+  }
+
+  if (normalized === "no" || normalized === "nie") {
+    return "Nie";
+  }
+
+  return answer;
 }
 
 export function MatchCard({ match }: MatchCardProps) {

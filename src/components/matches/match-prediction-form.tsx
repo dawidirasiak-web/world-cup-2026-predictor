@@ -11,6 +11,24 @@ const initialState: PredictionFormState = {
   message: "",
 };
 
+function isSameAnswer(left?: string | null, right?: string | null) {
+  const normalize = (value?: string | null) => {
+    const normalized = value?.trim().toLowerCase();
+
+    if (normalized === "yes" || normalized === "tak") {
+      return "tak";
+    }
+
+    if (normalized === "no" || normalized === "nie") {
+      return "nie";
+    }
+
+    return normalized ?? "";
+  };
+
+  return normalize(left) === normalize(right);
+}
+
 export function MatchPredictionForm({
   matchId,
   homeTeamName,
@@ -95,7 +113,7 @@ export function MatchPredictionForm({
                   value={answer}
                   required
                   disabled={disabled}
-                  defaultChecked={defaultQuestionAnswer === answer}
+                  defaultChecked={isSameAnswer(defaultQuestionAnswer, answer)}
                   className="h-4 w-4 accent-slate-950"
                 />
                 {answer}
