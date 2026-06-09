@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "World Cup 2026 Predictor",
+  title: "Typer Mistrzostwa Świata 2026",
   description: "Aplikacja do typowania Mistrzostw Swiata 2026",
 };
 

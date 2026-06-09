@@ -89,7 +89,7 @@ export default async function AdminPage() {
             href="/dashboard"
             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-medium"
           >
-            Dashboard
+            Strona Główna
           </Link>
           <SignOutButton />
         </nav>

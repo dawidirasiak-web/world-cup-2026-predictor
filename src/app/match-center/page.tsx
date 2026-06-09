@@ -28,7 +28,7 @@ const SOFASCORE_GROUP_WIDGETS = [
 
 type MatchWithRelations = Awaited<ReturnType<typeof getMatches>>[number];
 
-async function getMatches() {
+async function getMatches(userId: string) {
   return prisma.match.findMany({
     orderBy: [{ startsAt: "asc" }, { displayOrder: "asc" }],
     include: {
@@ -36,6 +36,14 @@ async function getMatches() {
       awayTeam: true,
       stadium: true,
       question: true,
+      predictions: {
+        where: { userId },
+        select: {
+          predictedHomeScore: true,
+          predictedAwayScore: true,
+          questionAnswer: true,
+        },
+      },
       _count: {
         select: { predictions: true },
       },
@@ -121,6 +129,43 @@ function MatchQuestionBlock({ match }: { match: MatchWithRelations }) {
   );
 }
 
+function formatUserQuestionAnswer(answer?: string | null) {
+  if (!answer) {
+    return "brak";
+  }
+
+  return answer.toLowerCase() === "yes" ? "Tak" : "Nie";
+}
+
+function UserPredictionBlock({ match }: { match: MatchWithRelations }) {
+  const prediction = match.predictions[0];
+
+  if (!prediction) {
+    return (
+      <p className="mt-3 inline-flex rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-500">
+        Nie masz jeszcze typu.
+      </p>
+    );
+  }
+
+  return (
+    <div className="mt-3 flex flex-wrap gap-2">
+      <span className="inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800">
+        Twój wynik
+        <strong className="rounded bg-white px-2 py-1 text-slate-950">
+          {prediction.predictedHomeScore}:{prediction.predictedAwayScore}
+        </strong>
+      </span>
+      <span className="inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800">
+        Pytanie
+        <strong className="rounded bg-white px-2 py-1 text-slate-950">
+          {formatUserQuestionAnswer(prediction.questionAnswer)}
+        </strong>
+      </span>
+    </div>
+  );
+}
+
 function MatchListItem({ match }: { match: MatchWithRelations }) {
   return (
     <Link
@@ -147,7 +192,7 @@ export default async function MatchCenterPage() {
     redirect("/auth/signin");
   }
 
-  const matches = await getMatches();
+  const matches = await getMatches(session.user.id);
   const groups = SOFASCORE_GROUP_WIDGETS.map((widget) => widget.group);
   const groupStageMatches = matches.filter(
     (match) => match.phase === "GROUP_STAGE",
@@ -178,7 +223,7 @@ export default async function MatchCenterPage() {
             href="/dashboard"
             className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
           >
-            Dashboard
+            Strona Główna
           </Link>
           <SignOutButton />
         </nav>
@@ -268,6 +313,7 @@ export default async function MatchCenterPage() {
                         Typy graczy: {match._count.predictions}
                       </p>
                       <MatchQuestionBlock match={match} />
+                      <UserPredictionBlock match={match} />
                     </div>
                     <span className="rounded-md bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700">
                       {getMatchStatus(match)}
@@ -433,6 +479,7 @@ export default async function MatchCenterPage() {
                     Typy graczy: {match._count.predictions}
                   </p>
                   <MatchQuestionBlock match={match} />
+                  <UserPredictionBlock match={match} />
                 </div>
 
                 <span

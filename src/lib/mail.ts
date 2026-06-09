@@ -25,7 +25,7 @@ export async function sendPasswordResetEmail(email: string, token: string) {
   await transporter.sendMail({
     to: email,
     from: process.env.SMTP_FROM ?? "no-reply@example.com",
-    subject: "Reset hasla - World Cup 2026 Predictor",
+    subject: "Reset hasla - Typer Mistrzostwa Swiata 2026",
     text: `Ustaw nowe hasło: ${resetUrl}`,
   });
 

@@ -46,7 +46,7 @@ export default async function Home() {
       <section className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
           <Link href="/" className="text-lg font-semibold tracking-tight">
-            World Cup 2026 Predictor
+            Typer Mistrzostwa Świata 2026
           </Link>
           <nav className="flex items-center gap-3 text-sm font-medium">
             {session?.user ? (
