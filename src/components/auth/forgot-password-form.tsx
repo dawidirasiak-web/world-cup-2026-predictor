@@ -23,14 +23,6 @@ export function ForgotPasswordForm() {
           }`}
         >
           <p>{state.message}</p>
-          {state.resetUrl ? (
-            <a
-              href={state.resetUrl}
-              className="mt-2 inline-flex font-semibold underline underline-offset-4"
-            >
-              Otworz link resetu hasla
-            </a>
-          ) : null}
         </div>
       ) : null}
       <label className="block text-sm font-medium text-slate-700">
@@ -47,7 +39,7 @@ export function ForgotPasswordForm() {
         disabled={isPending}
         className="w-full rounded-md bg-slate-950 px-4 py-2 font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
       >
-        {isPending ? "Wysylanie..." : "Wyslij link"}
+        {isPending ? "Sprawdzanie..." : "Przejdz do zmiany hasla"}
       </button>
     </form>
   );

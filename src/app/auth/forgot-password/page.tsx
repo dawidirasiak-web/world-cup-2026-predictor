@@ -7,7 +7,7 @@ export default function ForgotPasswordPage() {
         <p className="wc-kicker mb-3">Mundial 2026</p>
         <h1 className="text-2xl font-semibold tracking-tight">Reset hasła</h1>
         <p className="mt-2 text-sm text-slate-600">
-          Wpisz email, a system przygotuje link do ustawienia nowego hasła.
+          Wpisz email konta, a system od razu pozwoli ustawic nowe haslo.
         </p>
         <ForgotPasswordForm />
       </div>

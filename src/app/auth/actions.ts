@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
-import { sendPasswordResetEmail } from "@/lib/mail";
 
 const registerSchema = z.object({
   name: z.string().trim().min(2, "Podaj nick gracza."),
@@ -89,8 +88,8 @@ export async function requestPasswordReset(
 
   if (!user) {
     return {
-      ok: true,
-      message: "Jesli konto istnieje, link resetujacy zostanie wyslany.",
+      ok: false,
+      message: "Nie znaleziono konta z tym adresem email.",
     };
   }
 
@@ -106,31 +105,7 @@ export async function requestPasswordReset(
     },
   });
 
-  const resetEmail = await sendPasswordResetEmail(user.email, token).catch(
-    (error) => {
-      console.error("Password reset email failed:", error);
-      return null;
-    },
-  );
-
-  if (!resetEmail) {
-    return {
-      ok: false,
-      message:
-        "Nie udalo sie wyslac maila resetujacego. Sprobuj ponownie pozniej.",
-    };
-  }
-
-  const showLocalResetLink =
-    process.env.NODE_ENV !== "production" && !resetEmail.sentByEmail;
-
-  return {
-    ok: true,
-    message: showLocalResetLink
-      ? "Link resetujacy zostal przygotowany lokalnie."
-      : "Jesli konto istnieje, link resetujacy zostanie wyslany.",
-    resetUrl: showLocalResetLink ? resetEmail.resetUrl : undefined,
-  };
+  redirect(`/auth/reset-password?token=${token}`);
 }
 
 export async function resetPassword(
