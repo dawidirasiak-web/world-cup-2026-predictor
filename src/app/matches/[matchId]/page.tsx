@@ -35,7 +35,29 @@ export default async function MatchPage({
       awayTeam: true,
       stadium: true,
       question: true,
+      _count: {
+        select: { predictions: true },
+      },
       predictions: {
+        where: { userId: session.user.id },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
+
+  if (!match) {
+    notFound();
+  }
+
+  const prediction = match.predictions[0];
+  const isOpen = isMatchPredictionOpen(match.startsAt);
+  const canShowOtherPredictions = !isOpen;
+  const otherPredictions = canShowOtherPredictions
+    ? await prisma.matchPrediction.findMany({
+        where: {
+          matchId: match.id,
+          userId: { not: session.user.id },
+        },
         orderBy: { createdAt: "asc" },
         include: {
           user: {
@@ -48,21 +70,8 @@ export default async function MatchPage({
             },
           },
         },
-      },
-    },
-  });
-
-  if (!match) {
-    notFound();
-  }
-
-  const prediction = match.predictions.find(
-    (item) => item.userId === session.user.id,
-  );
-  const otherPredictions = match.predictions.filter(
-    (item) => item.userId !== session.user.id,
-  );
-  const isOpen = isMatchPredictionOpen(match.startsAt);
+      })
+    : [];
   const sofaScoreUrl = getExternalStatsUrl({
     externalStatsUrl: match.externalStatsUrl,
     matchNumber: match.displayOrder,
@@ -177,10 +186,15 @@ export default async function MatchPage({
           <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-xl font-semibold">Typy innych graczy</h2>
             <p className="mt-2 text-sm text-slate-600">
-              Zapisane typy dla tego meczu: {match.predictions.length}
+              Zapisane typy dla tego meczu: {match._count.predictions}
             </p>
             <div className="mt-5 space-y-3">
-              {otherPredictions.length > 0 ? (
+              {!canShowOtherPredictions ? (
+                <p className="rounded-md bg-slate-50 p-3 text-sm text-slate-600">
+                  Typy innych graczy beda widoczne od godziny rozpoczecia
+                  meczu.
+                </p>
+              ) : otherPredictions.length > 0 ? (
                 otherPredictions.map((item) => (
                   <div
                     key={item.id}
