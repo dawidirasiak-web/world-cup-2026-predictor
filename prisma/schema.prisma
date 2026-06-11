@@ -213,3 +213,10 @@ model TournamentResult {
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 }
+
+model AppSetting {
+  id                  String   @id @default("global")
+  registrationBlocked Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}

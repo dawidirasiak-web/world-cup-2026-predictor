@@ -22,6 +22,9 @@ const matchResultSchema = z.object({
   homeScore: z.coerce.number().int().min(0).max(30).optional(),
   awayScore: z.coerce.number().int().min(0).max(30).optional(),
 });
+const registrationSettingsSchema = z.object({
+  registrationBlocked: z.enum(["on", "off"]),
+});
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
@@ -394,4 +397,30 @@ export async function saveTournamentResult(formData: FormData) {
   revalidatePath("/dashboard");
   revalidatePath("/ranking");
   revalidatePath("/pre-tournament");
+}
+
+export async function saveRegistrationSettings(formData: FormData) {
+  await requireAdmin();
+
+  const parsed = registrationSettingsSchema.safeParse({
+    registrationBlocked: formData.get("registrationBlocked") ? "on" : "off",
+  });
+
+  if (!parsed.success) {
+    throw new Error("Niepoprawne ustawienia rejestracji.");
+  }
+
+  await prisma.appSetting.upsert({
+    where: { id: "global" },
+    update: {
+      registrationBlocked: parsed.data.registrationBlocked === "on",
+    },
+    create: {
+      id: "global",
+      registrationBlocked: parsed.data.registrationBlocked === "on",
+    },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/auth/register");
 }

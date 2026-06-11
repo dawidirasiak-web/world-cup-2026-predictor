@@ -7,11 +7,13 @@ import {
   saveMatchQuestionAnswer,
   saveMatchResult,
   savePreTournamentQuestionAnswer,
+  saveRegistrationSettings,
   saveTournamentResult,
 } from "@/app/admin/actions";
 import { authOptions } from "@/lib/auth";
 import { formatMatchDate, phaseLabel } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
+import { getRegistrationSettings } from "@/lib/registration-settings";
 
 function AnswerSelect({ defaultValue }: { defaultValue?: string | null }) {
   return (
@@ -38,8 +40,13 @@ export default async function AdminPage() {
     redirect("/dashboard");
   }
 
-  const [matches, preTournamentQuestions, teams, tournamentResult] =
-    await Promise.all([
+  const [
+    matches,
+    preTournamentQuestions,
+    teams,
+    tournamentResult,
+    registrationSettings,
+  ] = await Promise.all([
     prisma.match.findMany({
       orderBy: [{ displayOrder: "asc" }],
       include: {
@@ -66,6 +73,7 @@ export default async function AdminPage() {
       prisma.tournamentResult.findUnique({
         where: { id: "world-cup-2026" },
       }),
+      getRegistrationSettings(),
     ]);
 
   const answeredMatchQuestions = matches.filter(
@@ -125,6 +133,50 @@ export default async function AdminPage() {
             Pytania ogólne po 5 pkt.
           </p>
         </div>
+      </section>
+
+      <section className="pb-8">
+        <form
+          action={saveRegistrationSettings}
+          className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="wc-kicker">Rejestracja</p>
+              <h2 className="mt-2 text-2xl font-semibold">
+                Blokuj rejestracje
+              </h2>
+              <p className="mt-2 text-sm text-slate-600">
+                Automatyczna blokada wlacza sie 11.06.2026 o 20:30 czasu
+                polskiego.
+              </p>
+              <p className="mt-1 text-sm font-medium text-slate-800">
+                Status:{" "}
+                {registrationSettings.blocked
+                  ? "rejestracja zablokowana"
+                  : "rejestracja otwarta"}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="inline-flex cursor-pointer items-center gap-3 text-sm font-semibold text-slate-700">
+                <input
+                  name="registrationBlocked"
+                  type="checkbox"
+                  defaultChecked={registrationSettings.manualBlocked}
+                  className="peer sr-only"
+                />
+                <span className="relative h-7 w-12 rounded-full bg-slate-300 transition peer-checked:bg-slate-950 after:absolute after:left-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition peer-checked:after:translate-x-5" />
+                Blokuj
+              </label>
+              <button
+                type="submit"
+                className="rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+              >
+                Zapisz
+              </button>
+            </div>
+          </div>
+        </form>
       </section>
 
       <section className="wc-section-hero">

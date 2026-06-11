@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
+import { getRegistrationSettings } from "@/lib/registration-settings";
 
 const registerSchema = z.object({
   name: z.string().trim().min(2, "Podaj nick gracza."),
@@ -48,6 +49,15 @@ export async function registerUser(
   }
 
   const email = parsed.data.email.toLowerCase();
+  const registrationSettings = await getRegistrationSettings();
+
+  if (registrationSettings.blocked) {
+    return {
+      ok: false,
+      message: "Rejestracja jest obecnie zablokowana.",
+    };
+  }
+
   const existingUser = await prisma.user.findUnique({ where: { email } });
 
   if (existingUser) {

@@ -13,6 +13,7 @@ const cachedPrisma = globalForPrisma.prisma;
 const cachedPrismaRuntime = cachedPrisma as
   | (PrismaClient & {
       tournamentResult?: unknown;
+      appSetting?: unknown;
       user?: {
         fields?: {
           firstName?: unknown;
@@ -22,6 +23,7 @@ const cachedPrismaRuntime = cachedPrisma as
   | undefined;
 const hasCurrentSchema = Boolean(
   cachedPrismaRuntime?.tournamentResult &&
+    cachedPrismaRuntime?.appSetting &&
     cachedPrismaRuntime?.user?.fields?.firstName,
 );
 
