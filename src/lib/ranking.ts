@@ -54,6 +54,18 @@ export async function getRanking() {
         return second.totalPoints - first.totalPoints;
       }
 
+      if (second.matchScorePoints !== first.matchScorePoints) {
+        return second.matchScorePoints - first.matchScorePoints;
+      }
+
+      if (second.matchQuestionPoints !== first.matchQuestionPoints) {
+        return second.matchQuestionPoints - first.matchQuestionPoints;
+      }
+
+      if (second.preTournamentPoints !== first.preTournamentPoints) {
+        return second.preTournamentPoints - first.preTournamentPoints;
+      }
+
       return first.name.localeCompare(second.name, "pl");
     })
     .map((user, index) => ({

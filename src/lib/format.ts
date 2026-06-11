@@ -20,12 +20,52 @@ export function phaseLabel(phase: string) {
   return labels[phase] ?? phase;
 }
 
-export function getLocalDayRange(date = new Date()) {
-  const start = new Date(date);
-  start.setHours(0, 0, 0, 0);
+function getTimeZoneOffsetMs(date: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const value = (type: string) =>
+    Number(parts.find((part) => part.type === type)?.value);
+  const zonedAsUtc = Date.UTC(
+    value("year"),
+    value("month") - 1,
+    value("day"),
+    value("hour"),
+    value("minute"),
+    value("second"),
+  );
 
-  const end = new Date(start);
-  end.setDate(end.getDate() + 1);
+  return zonedAsUtc - date.getTime();
+}
+
+function warsawDateTimeToUtc(year: number, month: number, day: number) {
+  const utcGuess = Date.UTC(year, month - 1, day, 0, 0, 0);
+  const offset = getTimeZoneOffsetMs(new Date(utcGuess), "Europe/Warsaw");
+
+  return new Date(utcGuess - offset);
+}
+
+export function getLocalDayRange(date = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Warsaw",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const value = (type: string) =>
+    Number(parts.find((part) => part.type === type)?.value);
+  const year = value("year");
+  const month = value("month");
+  const day = value("day");
+  const start = warsawDateTimeToUtc(year, month, day);
+  const end = warsawDateTimeToUtc(year, month, day + 1);
 
   return { start, end };
 }
