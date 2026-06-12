@@ -85,6 +85,7 @@ export async function saveMatchPrediction(
   revalidatePath("/dashboard");
   revalidatePath("/matches");
   revalidatePath(`/matches/${match.id}`);
+  revalidatePath("/punktacja");
   revalidatePath("/ranking");
 
   redirect(`/matches#match-${match.id}`);

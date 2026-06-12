@@ -72,6 +72,27 @@ export default async function MatchPage({
         },
       })
     : [];
+  const usersWithoutPrediction = canShowOtherPredictions
+    ? await prisma.user.findMany({
+        where: {
+          role: "USER",
+          id: { not: session.user.id },
+          matchPredictions: {
+            none: {
+              matchId: match.id,
+            },
+          },
+        },
+        orderBy: { name: "asc" },
+        select: {
+          id: true,
+          name: true,
+          firstName: true,
+          lastName: true,
+          role: true,
+        },
+      })
+    : [];
   const sofaScoreUrl = getExternalStatsUrl({
     externalStatsUrl: match.externalStatsUrl,
     matchNumber: match.displayOrder,
@@ -227,6 +248,29 @@ export default async function MatchPage({
                 </p>
               )}
             </div>
+            {canShowOtherPredictions && usersWithoutPrediction.length > 0 ? (
+              <div className="mt-6 border-t border-slate-100 pt-5">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                  Nie obstawili
+                </h3>
+                <p className="mt-1 text-sm text-slate-600">
+                  Bez zapisanego typu: {usersWithoutPrediction.length}
+                </p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {usersWithoutPrediction.map((user) => (
+                    <div
+                      key={user.id}
+                      className="rounded-md bg-slate-50 px-3 py-2 text-sm"
+                    >
+                      <p className="font-medium">{user.name}</p>
+                      <p className="text-xs text-slate-500">
+                        {formatPlayerName(user)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </section>
 
         </div>

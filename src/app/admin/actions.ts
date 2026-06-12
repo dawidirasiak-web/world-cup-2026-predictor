@@ -222,6 +222,7 @@ export async function saveMatchQuestionAnswer(formData: FormData) {
   revalidatePath("/dashboard");
   revalidatePath("/ranking");
   revalidatePath("/matches");
+  revalidatePath("/punktacja");
 }
 
 export async function saveMatchResult(formData: FormData) {
@@ -278,6 +279,7 @@ export async function saveMatchResult(formData: FormData) {
   revalidatePath("/ranking");
   revalidatePath("/matches");
   revalidatePath("/match-center");
+  revalidatePath("/punktacja");
 }
 
 export async function savePreTournamentQuestionAnswer(formData: FormData) {
