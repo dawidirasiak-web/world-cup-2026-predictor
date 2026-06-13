@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { MatchCard } from "@/components/matches/match-card";
 import { authOptions } from "@/lib/auth";
+import { isMatchPredictionOpen } from "@/lib/prediction-lock";
 import { prisma } from "@/lib/prisma";
 
 export default async function MatchesPage() {
@@ -32,6 +33,20 @@ export default async function MatchesPage() {
         },
       },
     },
+  });
+  const now = new Date();
+  const sortedMatches = [...matches].sort((first, second) => {
+    const firstIsOpen = isMatchPredictionOpen(first.startsAt, now);
+    const secondIsOpen = isMatchPredictionOpen(second.startsAt, now);
+
+    if (firstIsOpen !== secondIsOpen) {
+      return firstIsOpen ? -1 : 1;
+    }
+
+    return (
+      first.startsAt.getTime() - second.startsAt.getTime() ||
+      first.displayOrder - second.displayOrder
+    );
   });
 
   return (
@@ -66,7 +81,7 @@ export default async function MatchesPage() {
       </section>
 
       <section className="space-y-4 pb-8">
-        {matches.map((match) => (
+        {sortedMatches.map((match) => (
           <MatchCard key={match.id} match={match} />
         ))}
       </section>
