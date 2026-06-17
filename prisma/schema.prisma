@@ -52,6 +52,7 @@ model User {
   matchPredictions      MatchPrediction[]
   passwordResetTokens   PasswordResetToken[]
   preTournamentPrediction PreTournamentPrediction?
+  rankingSnapshots      RankingSnapshot[]
 
   @@index([role])
 }
@@ -219,4 +220,21 @@ model AppSetting {
   registrationBlocked Boolean  @default(false)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+}
+
+model RankingSnapshot {
+  id                    String   @id @default(cuid())
+  snapshotDate          String
+  userId                String
+  position              Int
+  totalPoints           Int
+  matchScorePoints      Int
+  matchQuestionPoints   Int
+  preTournamentPoints   Int
+  createdAt             DateTime @default(now())
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([snapshotDate, userId])
+  @@index([snapshotDate])
+  @@index([userId])
 }

@@ -4,6 +4,41 @@ import { redirect } from "next/navigation";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { authOptions } from "@/lib/auth";
 import { getRanking } from "@/lib/ranking";
+import {
+  getRankingMovements,
+  type RankingMovement,
+} from "@/lib/ranking-snapshots";
+
+function PositionMovement({ movement }: { movement: RankingMovement }) {
+  const label =
+    movement.direction === "up"
+      ? `W gore o ${movement.places}`
+      : movement.direction === "down"
+        ? `W dol o ${movement.places}`
+        : "Bez zmian";
+  const indicator =
+    movement.direction === "up"
+      ? "↑"
+      : movement.direction === "down"
+        ? "↓"
+        : "−";
+  const className =
+    movement.direction === "up"
+      ? "bg-emerald-50 text-emerald-700"
+      : movement.direction === "down"
+        ? "bg-red-50 text-red-700"
+        : "bg-slate-100 text-slate-600";
+
+  return (
+    <span
+      title={label}
+      className={`inline-flex min-w-12 items-center justify-center gap-1 rounded-md px-2 py-1 text-xs font-semibold ${className}`}
+    >
+      <span aria-hidden="true">{indicator}</span>
+      <span>{movement.places}</span>
+    </span>
+  );
+}
 
 export default async function RankingPage() {
   const session = await getServerSession(authOptions);
@@ -13,6 +48,7 @@ export default async function RankingPage() {
   }
 
   const ranking = await getRanking();
+  const movements = await getRankingMovements(ranking);
 
   return (
     <main className="mx-auto min-h-screen max-w-6xl px-6 py-8">
@@ -41,6 +77,13 @@ export default async function RankingPage() {
             <p className="text-sm font-medium text-slate-500">
               Miejsce #{player.position}
             </p>
+            <div className="mt-2">
+              <PositionMovement
+                movement={
+                  movements.get(player.id) ?? { direction: "same", places: 0 }
+                }
+              />
+            </div>
             <h2 className="mt-2 text-xl font-semibold">{player.name}</h2>
             <p className="mt-1 text-xs font-medium uppercase text-slate-500">
               {player.playerName}
@@ -63,6 +106,16 @@ export default async function RankingPage() {
                 <p className="text-xs font-semibold uppercase text-slate-500">
                   Miejsce #{player.position}
                 </p>
+                <div className="mt-1">
+                  <PositionMovement
+                    movement={
+                      movements.get(player.id) ?? {
+                        direction: "same",
+                        places: 0,
+                      }
+                    }
+                  />
+                </div>
                 <h2 className="mt-1 font-semibold">{player.name}</h2>
                 <p className="text-xs text-slate-500">{player.playerName}</p>
               </div>
@@ -97,6 +150,7 @@ export default async function RankingPage() {
           <thead className="bg-slate-50 text-slate-600">
             <tr>
               <th className="px-4 py-3 font-medium">#</th>
+              <th className="px-4 py-3 font-medium">Zmiana</th>
               <th className="px-4 py-3 font-medium">Gracz</th>
               <th className="px-4 py-3 font-medium">Wyniki</th>
               <th className="px-4 py-3 font-medium">Pytania meczowe</th>
@@ -108,6 +162,16 @@ export default async function RankingPage() {
             {ranking.map((player) => (
               <tr key={player.id} className="border-t border-slate-100">
                 <td className="px-4 py-3 font-semibold">{player.position}</td>
+                <td className="px-4 py-3">
+                  <PositionMovement
+                    movement={
+                      movements.get(player.id) ?? {
+                        direction: "same",
+                        places: 0,
+                      }
+                    }
+                  />
+                </td>
                 <td className="px-4 py-3">
                   <div className="font-medium">{player.name}</div>
                   <div className="text-xs text-slate-500">
