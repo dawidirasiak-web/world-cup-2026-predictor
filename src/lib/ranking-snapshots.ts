@@ -1,4 +1,6 @@
 import { getRanking } from "@/lib/ranking";
+import { getLocalDayRange } from "@/lib/format";
+import { formatPlayerName } from "@/lib/player-name";
 import { prisma } from "@/lib/prisma";
 
 export type RankingMovement = {
@@ -17,6 +19,89 @@ export function getWarsawDateKey(date = new Date()) {
     parts.find((part) => part.type === type)?.value ?? "";
 
   return `${value("year")}-${value("month")}-${value("day")}`;
+}
+
+function getWarsawDayStartFromDateKey(dateKey: string) {
+  const [year, month, day] = dateKey.split("-").map(Number);
+
+  return getLocalDayRange(new Date(Date.UTC(year, month - 1, day, 12))).start;
+}
+
+async function getBackfilledPreviousPositions(snapshotDate: string) {
+  const dayStart = getWarsawDayStartFromDateKey(snapshotDate);
+  const users = await prisma.user.findMany({
+    where: { role: "USER" },
+    orderBy: { name: "asc" },
+    include: {
+      matchPredictions: {
+        where: {
+          match: {
+            startsAt: { lt: dayStart },
+          },
+        },
+        select: {
+          scorePoints: true,
+          questionPoints: true,
+          totalPoints: true,
+        },
+      },
+      preTournamentPrediction: {
+        select: {
+          totalPoints: true,
+        },
+      },
+    },
+  });
+
+  return new Map(
+    users
+      .map((user) => {
+        const matchScorePoints = user.matchPredictions.reduce(
+          (sum, prediction) => sum + prediction.scorePoints,
+          0,
+        );
+        const matchQuestionPoints = user.matchPredictions.reduce(
+          (sum, prediction) => sum + prediction.questionPoints,
+          0,
+        );
+        const matchTotalPoints = user.matchPredictions.reduce(
+          (sum, prediction) => sum + prediction.totalPoints,
+          0,
+        );
+        const preTournamentPoints =
+          user.preTournamentPrediction?.totalPoints ?? 0;
+
+        return {
+          id: user.id,
+          name: user.name,
+          playerName: formatPlayerName(user),
+          matchScorePoints,
+          matchQuestionPoints,
+          preTournamentPoints,
+          totalPoints: matchTotalPoints + preTournamentPoints,
+        };
+      })
+      .sort((first, second) => {
+        if (second.totalPoints !== first.totalPoints) {
+          return second.totalPoints - first.totalPoints;
+        }
+
+        if (second.matchScorePoints !== first.matchScorePoints) {
+          return second.matchScorePoints - first.matchScorePoints;
+        }
+
+        if (second.matchQuestionPoints !== first.matchQuestionPoints) {
+          return second.matchQuestionPoints - first.matchQuestionPoints;
+        }
+
+        if (second.preTournamentPoints !== first.preTournamentPoints) {
+          return second.preTournamentPoints - first.preTournamentPoints;
+        }
+
+        return first.name.localeCompare(second.name, "pl");
+      })
+      .map((player, index) => [player.id, index + 1]),
+  );
 }
 
 export async function saveRankingSnapshot(date = new Date()) {
@@ -63,26 +148,58 @@ export async function getRankingMovements(
   date = new Date(),
 ) {
   const snapshotDate = getWarsawDateKey(date);
-  const snapshots = await prisma.rankingSnapshot.findMany({
-    where: { snapshotDate },
-    select: {
-      userId: true,
-      position: true,
-    },
+  const snapshotDates = await prisma.rankingSnapshot.findMany({
+    where: { snapshotDate: { lte: snapshotDate } },
+    distinct: ["snapshotDate"],
+    orderBy: { snapshotDate: "desc" },
+    take: 2,
+    select: { snapshotDate: true },
   });
-  const positionByUserId = new Map(
-    snapshots.map((snapshot) => [snapshot.userId, snapshot.position]),
+  const currentSnapshotDate = snapshotDates[0]?.snapshotDate;
+  const previousSnapshotDate = snapshotDates[1]?.snapshotDate;
+
+  const currentSnapshots = currentSnapshotDate
+    ? await prisma.rankingSnapshot.findMany({
+        where: { snapshotDate: currentSnapshotDate },
+        select: {
+          userId: true,
+          position: true,
+        },
+      })
+    : [];
+  const previousSnapshots = previousSnapshotDate
+    ? await prisma.rankingSnapshot.findMany({
+        where: { snapshotDate: previousSnapshotDate },
+        select: {
+          userId: true,
+          position: true,
+        },
+      })
+    : [];
+  const currentPositionByUserId = new Map(
+    currentSnapshots.map((snapshot) => [snapshot.userId, snapshot.position]),
   );
+  const previousPositionByUserId =
+    previousSnapshots.length > 0
+      ? new Map(
+          previousSnapshots.map((snapshot) => [
+            snapshot.userId,
+            snapshot.position,
+          ]),
+        )
+      : await getBackfilledPreviousPositions(snapshotDate);
 
   return new Map<string, RankingMovement>(
     ranking.map((player) => {
-      const previousPosition = positionByUserId.get(player.id);
+      const currentPosition =
+        currentPositionByUserId.get(player.id) ?? player.position;
+      const previousPosition = previousPositionByUserId.get(player.id);
 
       if (!previousPosition) {
         return [player.id, { direction: "same", places: 0 }];
       }
 
-      const difference = previousPosition - player.position;
+      const difference = previousPosition - currentPosition;
 
       if (difference > 0) {
         return [player.id, { direction: "up", places: difference }];
