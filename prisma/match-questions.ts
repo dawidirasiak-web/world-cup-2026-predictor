@@ -30,7 +30,7 @@ export const matchQuestionsByNumber: Record<number, string> = {
   29: "Czy będzie minimum 24 fauli?",
   30: "Czy padnie gol spoza pola karnego?",
   31: "Czy padnie gol po stałym fragmencie gry?",
-  32: "Czy obie drużyny będą prowadzić w posiadaniu piłki przez co najmniej jedną połowę?",
+  32: "Czy jedna drużyna będzie miała większe posiadanie piłki w jednej połowie, a druga w drugiej?",
   33: "Czy będzie więcej niż 8 celnych strzałów łącznie?",
   34: "Czy padnie gol w ciągu pierwszych 10 minut?",
   35: "Czy obie drużyny strzelą po przerwie?",
