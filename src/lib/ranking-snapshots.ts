@@ -29,6 +29,8 @@ function getWarsawDayStartFromDateKey(dateKey: string) {
 
 async function getBackfilledPreviousPositions(snapshotDate: string) {
   const dayStart = getWarsawDayStartFromDateKey(snapshotDate);
+  const previousDayStart = new Date(dayStart);
+  previousDayStart.setUTCDate(previousDayStart.getUTCDate() - 1);
   const users = await prisma.user.findMany({
     where: { role: "USER" },
     orderBy: { name: "asc" },
@@ -36,7 +38,7 @@ async function getBackfilledPreviousPositions(snapshotDate: string) {
       matchPredictions: {
         where: {
           match: {
-            startsAt: { lt: dayStart },
+            startsAt: { lt: previousDayStart },
           },
         },
         select: {
