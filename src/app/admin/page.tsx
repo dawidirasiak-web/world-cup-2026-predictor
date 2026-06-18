@@ -9,11 +9,13 @@ import {
   savePreTournamentQuestionAnswer,
   saveRegistrationSettings,
   saveTournamentResult,
+  syncMatchQuestions,
 } from "@/app/admin/actions";
 import { authOptions } from "@/lib/auth";
 import { formatMatchDate, phaseLabel } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { getRegistrationSettings } from "@/lib/registration-settings";
+import { getMatchQuestion } from "../../../prisma/match-questions";
 
 function AnswerSelect({ defaultValue }: { defaultValue?: string | null }) {
   return (
@@ -179,6 +181,31 @@ export default async function AdminPage() {
         </form>
       </section>
 
+      <section className="pb-8">
+        <form
+          action={syncMatchQuestions}
+          className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="wc-kicker">Pytania meczowe</p>
+              <h2 className="mt-2 text-2xl font-semibold">
+                Synchronizuj treść pytań
+              </h2>
+              <p className="mt-2 text-sm text-slate-600">
+                Nadpisuje pytania meczowe w bazie aktualną listą z kodu.
+              </p>
+            </div>
+            <button
+              type="submit"
+              className="rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              Synchronizuj pytania
+            </button>
+          </div>
+        </form>
+      </section>
+
       <section className="wc-section-hero">
         <p className="wc-kicker">Admin</p>
         <h2 className="mt-2 text-3xl font-semibold tracking-tight">
@@ -339,7 +366,9 @@ export default async function AdminPage() {
                     />
                   </div>
                   <p className="mt-3 text-sm text-slate-700">
-                    {match.question?.question ?? "Brak pytania dla meczu."}
+                    {match.question
+                      ? getMatchQuestion(match.displayOrder)
+                      : "Brak pytania dla meczu."}
                   </p>
                   <p className="mt-2 text-xs text-slate-500">
                     Typy graczy: {match._count.predictions}

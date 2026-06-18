@@ -5,6 +5,7 @@ import { SignOutButton } from "@/components/auth/sign-out-button";
 import { authOptions } from "@/lib/auth";
 import { formatMatchDate, phaseLabel } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
+import { getMatchQuestion } from "../../../prisma/match-questions";
 
 function formatDay(date: Date) {
   return new Intl.DateTimeFormat("pl-PL", {
@@ -210,7 +211,7 @@ export default async function PunktacjaPage() {
                             </p>
                             {match.question ? (
                               <p className="mt-2 text-sm text-slate-600">
-                                {match.question.question}
+                                {getMatchQuestion(match.displayOrder)}
                                 <br />
                                 Twoja odpowiedź:{" "}
                                 <strong>

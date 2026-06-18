@@ -9,6 +9,7 @@ import {
   updateMatchResultAndRecalculate,
 } from "@/lib/match-points";
 import { prisma } from "@/lib/prisma";
+import { getMatchQuestion } from "../../../prisma/match-questions";
 
 const yesNoAnswerSchema = z.enum(["Tak", "Nie", ""]);
 const tournamentResultSchema = z.object({
@@ -425,4 +426,35 @@ export async function saveRegistrationSettings(formData: FormData) {
 
   revalidatePath("/admin");
   revalidatePath("/auth/register");
+}
+
+export async function syncMatchQuestions() {
+  await requireAdmin();
+
+  const matches = await prisma.match.findMany({
+    orderBy: { displayOrder: "asc" },
+    select: {
+      id: true,
+      displayOrder: true,
+    },
+  });
+
+  for (const match of matches) {
+    await prisma.matchQuestion.upsert({
+      where: { matchId: match.id },
+      update: {
+        question: getMatchQuestion(match.displayOrder),
+      },
+      create: {
+        matchId: match.id,
+        question: getMatchQuestion(match.displayOrder),
+      },
+    });
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/dashboard");
+  revalidatePath("/matches");
+  revalidatePath("/match-center");
+  revalidatePath("/punktacja");
 }

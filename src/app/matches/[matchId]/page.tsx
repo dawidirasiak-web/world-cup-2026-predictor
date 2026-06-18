@@ -11,6 +11,7 @@ import { formatMatchDate, phaseLabel } from "@/lib/format";
 import { formatPlayerName } from "@/lib/player-name";
 import { isMatchPredictionOpen } from "@/lib/prediction-lock";
 import { prisma } from "@/lib/prisma";
+import { getMatchQuestion } from "../../../../prisma/match-questions";
 
 function formatQuestionAnswer(answer?: string | null) {
   return answer ? answer : "brak odpowiedzi";
@@ -51,6 +52,7 @@ export default async function MatchPage({
 
   const prediction = match.predictions[0];
   const isOpen = isMatchPredictionOpen(match.startsAt);
+  const questionText = getMatchQuestion(match.displayOrder);
   const canShowOtherPredictions = !isOpen;
   const otherPredictions = canShowOtherPredictions
     ? await prisma.matchPrediction.findMany({
@@ -175,7 +177,7 @@ export default async function MatchPage({
               matchId={match.id}
               homeTeamName={match.homeTeam.name}
               awayTeamName={match.awayTeam.name}
-              question={match.question?.question}
+              question={match.question ? questionText : undefined}
               defaultHomeScore={prediction?.predictedHomeScore}
               defaultAwayScore={prediction?.predictedAwayScore}
               defaultQuestionAnswer={prediction?.questionAnswer}

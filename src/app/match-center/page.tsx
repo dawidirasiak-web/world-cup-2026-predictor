@@ -7,6 +7,7 @@ import { authOptions } from "@/lib/auth";
 import { getExternalStatsUrl } from "@/lib/external-stats";
 import { formatMatchDate, getLocalDayRange, phaseLabel } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
+import { getMatchQuestion } from "../../../prisma/match-questions";
 
 const SOFASCORE_TOURNAMENT_URL =
   "https://www.sofascore.com/football/tournament/world/world-championship/16#id:58210";
@@ -136,7 +137,7 @@ function MatchQuestionBlock({ match }: { match: MatchWithRelations }) {
 
   return (
     <p className="mt-2 rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-700">
-      {match.question.question}
+      {getMatchQuestion(match.displayOrder)}
     </p>
   );
 }

@@ -2,10 +2,12 @@ import Link from "next/link";
 import { TeamLine } from "@/components/matches/team-line";
 import { formatMatchDate, phaseLabel } from "@/lib/format";
 import { isMatchPredictionOpen } from "@/lib/prediction-lock";
+import { getMatchQuestion } from "../../../prisma/match-questions";
 
 type MatchCardProps = {
   match: {
     id: string;
+    displayOrder: number;
     startsAt: Date;
     phase: string;
     group: string | null;
@@ -59,6 +61,7 @@ function formatQuestionAnswer(answer?: string | null) {
 export function MatchCard({ match }: MatchCardProps) {
   const prediction = match.predictions[0];
   const isOpen = isMatchPredictionOpen(match.startsAt);
+  const questionText = getMatchQuestion(match.displayOrder);
 
   return (
     <article
@@ -106,7 +109,7 @@ export function MatchCard({ match }: MatchCardProps) {
             Pytanie meczowe za 1 punkt
           </p>
           <p className="mt-1 text-sm text-slate-800">
-            {match.question.question}
+            {questionText}
           </p>
         </div>
       ) : null}
