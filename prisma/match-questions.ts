@@ -66,7 +66,7 @@ export const matchQuestionsByNumber: Record<number, string> = {
   65: "Czy któryś zawodnik zakończy mecz z dwiema kartkami (czerwona po dwóch żółtych)?",
   66: "Czy padną co najmniej 2 gole w jednej połowie?",
   67: "Czy pierwsza połowa zakończy się prowadzeniem jednej z drużyn?",
-  68: "Czy będzie czerwona kartka?",
+  68: "Czy będzie czerwona kartka (bez sztabu i ławki)?",
   69: "Czy będzie minimum 6 minut doliczonego czasu w drugiej połowie?",
   70: "Czy zostanie podyktowany rzut karny?",
   71: "Czy sędzia pokaże pierwszą kartkę przed 20. minutą?",
