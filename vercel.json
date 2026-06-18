@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/snapshot-ranking",
-      "schedule": "0 22 * * *"
+      "schedule": "0 10 * * *"
     }
   ]
 }

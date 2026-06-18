@@ -21,16 +21,19 @@ export function getWarsawDateKey(date = new Date()) {
   return `${value("year")}-${value("month")}-${value("day")}`;
 }
 
-function getWarsawDayStartFromDateKey(dateKey: string) {
+function getWarsawNoonFromDateKey(dateKey: string) {
   const [year, month, day] = dateKey.split("-").map(Number);
+  const dayStart = getLocalDayRange(
+    new Date(Date.UTC(year, month - 1, day, 12)),
+  ).start;
 
-  return getLocalDayRange(new Date(Date.UTC(year, month - 1, day, 12))).start;
+  return new Date(dayStart.getTime() + 1000 * 60 * 60 * 12);
 }
 
 async function getBackfilledPreviousPositions(snapshotDate: string) {
-  const dayStart = getWarsawDayStartFromDateKey(snapshotDate);
-  const previousDayStart = new Date(dayStart);
-  previousDayStart.setUTCDate(previousDayStart.getUTCDate() - 1);
+  const snapshotNoon = getWarsawNoonFromDateKey(snapshotDate);
+  const previousSnapshotNoon = new Date(snapshotNoon);
+  previousSnapshotNoon.setUTCDate(previousSnapshotNoon.getUTCDate() - 1);
   const users = await prisma.user.findMany({
     where: { role: "USER" },
     orderBy: { name: "asc" },
@@ -38,7 +41,7 @@ async function getBackfilledPreviousPositions(snapshotDate: string) {
       matchPredictions: {
         where: {
           match: {
-            startsAt: { lt: previousDayStart },
+            startsAt: { lt: previousSnapshotNoon },
           },
         },
         select: {
