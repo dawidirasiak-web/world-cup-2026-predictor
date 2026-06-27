@@ -11,8 +11,9 @@
     "prisma:generate": "prisma generate",
     "prisma:validate": "prisma validate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:seed": "tsx prisma/seed.ts",
+  "prisma:seed": "tsx prisma/seed.ts",
   "prisma:seed:pre": "tsx prisma/seed-pre-tournament.ts",
+  "prisma:seed:playoff": "tsx prisma/seed-playoff-round-of-32.ts",
   "prisma:seed:match-questions": "tsx prisma/seed-match-questions.ts",
   "import:worldcup": "tsx prisma/import-world-cup-2026.ts",
   "import:sofascore-widgets": "tsx prisma/import-sofascore-widgets.ts"

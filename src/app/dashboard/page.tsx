@@ -294,11 +294,17 @@ export default async function DashboardPage() {
           >
             Punktacja
           </Link>
+          <Link
+            href="/playoff"
+            className="rounded-md border border-slate-200 px-4 py-2"
+          >
+            Play-off
+          </Link>
           <SignOutButton />
         </nav>
       </header>
 
-      <section className="grid gap-4 py-8 md:grid-cols-3">
+      <section className="grid gap-4 py-8 md:grid-cols-2 lg:grid-cols-4">
         <div className="wc-hero-card rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <p className="text-sm font-medium text-slate-500">Mecze</p>
           <p className="mt-2 text-3xl font-semibold">{allMatchesCount}</p>
@@ -342,6 +348,20 @@ export default async function DashboardPage() {
             className="mt-4 inline-flex rounded-md bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
           >
             Otwórz centrum
+          </Link>
+        </div>
+
+        <div className="wc-hero-card rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <p className="text-sm font-medium text-slate-500">Play-off</p>
+          <p className="mt-2 text-3xl font-semibold">32</p>
+          <p className="mt-2 text-sm text-slate-600">
+            Drabinka fazy pucharowej i mecze 1/16 finału do obstawienia.
+          </p>
+          <Link
+            href="/playoff"
+            className="mt-4 inline-flex rounded-md bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+          >
+            Otwórz drabinkę
           </Link>
         </div>
       </section>
