@@ -71,6 +71,22 @@ export const matchQuestionsByNumber: Record<number, string> = {
   70: "Czy zostanie podyktowany rzut karny?",
   71: "Czy sędzia pokaże pierwszą kartkę przed 20. minutą?",
   72: "Czy któryś zawodnik zdobędzie bramkę w ciągu 10 minut od wejścia z ławki?",
+  73: "Czy Kanada strzeli pierwszego gola w meczu?",
+  74: "Czy Niemcy wygrają mecz w regulaminowym czasie?",
+  75: "Czy obie drużyny strzelą gola?",
+  76: "Czy Brazylia strzeli co najmniej 2 gole?",
+  77: "Czy Francja zachowa czyste konto?",
+  78: "Czy Norwegia strzeli gola w pierwszej połowie?",
+  79: "Czy mecz zakończy się remisem po 90 minutach?",
+  80: "Czy Anglia wygra różnicą co najmniej 2 goli?",
+  81: "Czy USA strzeli gola przed przerwą?",
+  82: "Czy Senegal uniknie porażki w regulaminowym czasie?",
+  83: "Czy padną co najmniej 3 gole?",
+  84: "Czy Hiszpania będzie prowadzić do przerwy?",
+  85: "Czy obie drużyny strzelą gola?",
+  86: "Czy Argentyna zachowa czyste konto?",
+  87: "Czy Ghana strzeli gola?",
+  88: "Czy mecz będzie rozstrzygnięty po 90 minutach?",
 };
 
 export function getMatchQuestion(matchNumber: number) {
