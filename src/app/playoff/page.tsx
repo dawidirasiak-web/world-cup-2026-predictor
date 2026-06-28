@@ -1,8 +1,8 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { SignOutButton } from "@/components/auth/sign-out-button";
-import { TeamLine } from "@/components/matches/team-line";
 import { authOptions } from "@/lib/auth";
 import { formatMatchDate, phaseLabel } from "@/lib/format";
 import { getPlayoffSlotLabel } from "@/lib/playoff-bracket";
@@ -71,14 +71,34 @@ function TeamSlot({
   name: string;
   flagUrl?: string | null;
 }) {
-  if (!isPlaceholderTeam(name)) {
-    return <TeamLine name={name} flagUrl={flagUrl} />;
-  }
+  const muted = isPlaceholderTeam(name);
 
   return (
-    <span className="inline-flex min-w-0 items-center gap-2 text-slate-500">
-      <span className="h-4 w-6 rounded-sm border border-dashed border-slate-300 bg-slate-50" />
-      <span className="truncate">{name}</span>
+    <span
+      className={`flex min-w-0 flex-1 items-center gap-2 ${
+        muted ? "text-slate-500" : "text-slate-800"
+      }`}
+    >
+      {flagUrl && !muted ? (
+        <Image
+          src={flagUrl}
+          alt=""
+          width={28}
+          height={20}
+          className="h-5 w-7 shrink-0 rounded-sm border border-slate-200 object-cover"
+        />
+      ) : (
+        <span
+          className={`h-5 w-7 shrink-0 rounded-sm border ${
+            muted
+              ? "border-dashed border-slate-300 bg-slate-50"
+              : "border-slate-200 bg-slate-100"
+          }`}
+        />
+      )}
+      <span className="min-w-0 flex-1 whitespace-normal break-words leading-tight">
+        {name}
+      </span>
     </span>
   );
 }
@@ -123,14 +143,14 @@ function BracketMatch({
       {!isLastRound ? (
         <span className="absolute left-full top-1/2 h-px w-7 bg-blue-300" />
       ) : null}
-      <article className="relative z-10 w-[184px] overflow-hidden rounded-md border border-slate-200 bg-white text-[11px] shadow-sm">
-        <div className="flex items-center justify-between bg-slate-200 px-2 py-1 font-semibold text-slate-700">
+      <article className="relative z-10 w-[252px] overflow-hidden rounded-md border border-slate-200 bg-white text-[12px] shadow-sm">
+        <div className="flex min-h-7 items-center justify-between bg-slate-200 px-2 py-1 font-semibold text-slate-700">
           <span className="truncate">{formatMatchDate(match?.startsAt ?? new Date())}</span>
           <span className="ml-2 shrink-0">#{matchNumber}</span>
         </div>
         <div className="space-y-1 p-2">
           <div
-            className={`flex items-center justify-between gap-2 rounded px-2 py-1 ${
+            className={`flex min-h-10 items-center justify-between gap-2 rounded px-2 py-1.5 ${
               homeWon ? "bg-emerald-50" : "bg-slate-50"
             }`}
           >
@@ -141,7 +161,7 @@ function BracketMatch({
             <ScoreCell score={homeScore} winner={homeWon} />
           </div>
           <div
-            className={`flex items-center justify-between gap-2 rounded px-2 py-1 ${
+            className={`flex min-h-10 items-center justify-between gap-2 rounded px-2 py-1.5 ${
               awayWon ? "bg-emerald-50" : "bg-slate-50"
             }`}
           >
@@ -152,7 +172,7 @@ function BracketMatch({
             <ScoreCell score={awayScore} winner={awayWon} />
           </div>
         </div>
-        <div className="border-t border-slate-100 px-2 py-1 text-[10px] font-medium text-slate-500">
+        <div className="border-t border-slate-100 px-2 py-1.5 text-[10px] font-medium text-slate-500">
           {match ? phaseLabel(match.phase) : "Play-off"}
         </div>
       </article>
@@ -226,7 +246,7 @@ export default async function PlayoffPage() {
         </div>
 
         <div className="overflow-x-auto rounded-md border border-slate-200 bg-[#eaf4fb] p-4 shadow-sm">
-          <div className="grid min-w-[1180px] grid-cols-[220px_220px_220px_220px_220px] gap-x-10">
+          <div className="grid min-w-[1580px] grid-cols-[270px_270px_270px_270px_270px] gap-x-12">
             {bracketRounds.map((round, roundIndex) => (
               <section key={round.title}>
                 <div className="mb-3 rounded-md bg-slate-200 px-3 py-2">
@@ -235,7 +255,7 @@ export default async function PlayoffPage() {
                   </p>
                   <h3 className="text-sm font-bold text-slate-800">{round.title}</h3>
                 </div>
-                <div className="grid grid-rows-[repeat(32,44px)]">
+                <div className="grid grid-rows-[repeat(32,68px)]">
                   {round.matchNumbers.map((matchNumber, index) => (
                     <div
                       key={matchNumber}
