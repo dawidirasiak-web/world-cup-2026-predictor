@@ -141,6 +141,7 @@ export async function GET(request: Request) {
     revalidatePath("/ranking");
     revalidatePath("/matches");
     revalidatePath("/match-center");
+    revalidatePath("/playoff");
   }
 
   return NextResponse.json({

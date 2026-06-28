@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "@/lib/auth";
 import {
+  clearMatchResultAndRecalculate,
   recalculateMatchPredictions,
   updateMatchResultAndRecalculate,
 } from "@/lib/match-points";
@@ -255,15 +256,7 @@ export async function saveMatchResult(formData: FormData) {
 
   await prisma.$transaction(async (transaction) => {
     if (!hasHomeScore || !hasAwayScore) {
-      await transaction.match.update({
-        where: { id: parsed.data.matchId },
-        data: {
-          homeScore: null,
-          awayScore: null,
-          status: "SCHEDULED",
-        },
-      });
-      await recalculateMatchPredictions(transaction, parsed.data.matchId);
+      await clearMatchResultAndRecalculate(transaction, parsed.data.matchId);
       return;
     }
 
@@ -281,6 +274,7 @@ export async function saveMatchResult(formData: FormData) {
   revalidatePath("/matches");
   revalidatePath("/match-center");
   revalidatePath("/punktacja");
+  revalidatePath("/playoff");
 }
 
 export async function savePreTournamentQuestionAnswer(formData: FormData) {

@@ -5,59 +5,45 @@ import { SignOutButton } from "@/components/auth/sign-out-button";
 import { TeamLine } from "@/components/matches/team-line";
 import { authOptions } from "@/lib/auth";
 import { formatMatchDate, phaseLabel } from "@/lib/format";
-import { isMatchPredictionOpen } from "@/lib/prediction-lock";
+import { getPlayoffSlotLabel } from "@/lib/playoff-bracket";
 import { prisma } from "@/lib/prisma";
 
 const bracketRounds = [
   {
     title: "1/16 finału",
     shortTitle: "1/16",
-    matchNumbers: [73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88],
+    matchNumbers: [74, 77, 73, 75, 83, 84, 81, 82, 76, 78, 79, 80, 86, 88, 85, 87],
+    rows: [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31],
   },
   {
     title: "1/8 finału",
     shortTitle: "1/8",
-    matchNumbers: [89, 90, 91, 92, 93, 94, 95, 96],
+    matchNumbers: [89, 90, 93, 94, 91, 92, 95, 96],
+    rows: [2, 6, 10, 14, 18, 22, 26, 30],
   },
   {
     title: "Ćwierćfinały",
     shortTitle: "1/4",
     matchNumbers: [97, 98, 99, 100],
+    rows: [4, 12, 20, 28],
   },
   {
     title: "Półfinały",
     shortTitle: "1/2",
     matchNumbers: [101, 102],
+    rows: [8, 24],
   },
   {
     title: "Finał",
     shortTitle: "Finał",
     matchNumbers: [104],
+    rows: [16],
   },
 ];
 
-const sourceLabelsByMatchNumber: Record<number, [string, string]> = {
-  89: ["Zwycięzca meczu 74", "Zwycięzca meczu 77"],
-  90: ["Zwycięzca meczu 73", "Zwycięzca meczu 75"],
-  91: ["Zwycięzca meczu 76", "Zwycięzca meczu 78"],
-  92: ["Zwycięzca meczu 79", "Zwycięzca meczu 80"],
-  93: ["Zwycięzca meczu 83", "Zwycięzca meczu 84"],
-  94: ["Zwycięzca meczu 81", "Zwycięzca meczu 82"],
-  95: ["Zwycięzca meczu 86", "Zwycięzca meczu 88"],
-  96: ["Zwycięzca meczu 85", "Zwycięzca meczu 87"],
-  97: ["Zwycięzca meczu 89", "Zwycięzca meczu 90"],
-  98: ["Zwycięzca meczu 93", "Zwycięzca meczu 94"],
-  99: ["Zwycięzca meczu 91", "Zwycięzca meczu 92"],
-  100: ["Zwycięzca meczu 95", "Zwycięzca meczu 96"],
-  101: ["Zwycięzca meczu 97", "Zwycięzca meczu 98"],
-  102: ["Zwycięzca meczu 99", "Zwycięzca meczu 100"],
-  103: ["Przegrany meczu 101", "Przegrany meczu 102"],
-  104: ["Zwycięzca meczu 101", "Zwycięzca meczu 102"],
-};
-
 type PlayoffMatch = Awaited<ReturnType<typeof getPlayoffMatches>>[number];
 
-async function getPlayoffMatches(userId: string) {
+async function getPlayoffMatches() {
   return prisma.match.findMany({
     where: {
       displayOrder: {
@@ -70,148 +56,107 @@ async function getPlayoffMatches(userId: string) {
       homeTeam: true,
       awayTeam: true,
       stadium: true,
-      predictions: {
-        where: { userId },
-        select: {
-          predictedHomeScore: true,
-          predictedAwayScore: true,
-          totalPoints: true,
-        },
-      },
     },
   });
 }
 
-function getFallbackSlot(matchNumber: number) {
-  return sourceLabelsByMatchNumber[matchNumber] ?? ["Do ustalenia", "Do ustalenia"];
-}
-
-function PredictionBadge({ match }: { match: PlayoffMatch }) {
-  const prediction = match.predictions[0];
-
-  if (!prediction) {
-    return (
-      <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">
-        Brak typu
-      </span>
-    );
-  }
-
-  return (
-    <span className="rounded-md bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">
-      Twój typ {prediction.predictedHomeScore}:{prediction.predictedAwayScore}
-    </span>
-  );
+function isPlaceholderTeam(name: string) {
+  return name.startsWith("Zwycięzca") || name.startsWith("Przegrany");
 }
 
 function TeamSlot({
   name,
   flagUrl,
-  muted = false,
 }: {
   name: string;
   flagUrl?: string | null;
-  muted?: boolean;
 }) {
-  if (flagUrl || !muted) {
+  if (!isPlaceholderTeam(name)) {
     return <TeamLine name={name} flagUrl={flagUrl} />;
   }
 
   return (
     <span className="inline-flex min-w-0 items-center gap-2 text-slate-500">
-      <span className="h-5 w-7 rounded-sm border border-dashed border-slate-300 bg-slate-50" />
+      <span className="h-4 w-6 rounded-sm border border-dashed border-slate-300 bg-slate-50" />
       <span className="truncate">{name}</span>
     </span>
   );
 }
 
-function BracketMatchCard({
+function ScoreCell({
+  score,
+  winner,
+}: {
+  score: number | null;
+  winner: boolean;
+}) {
+  return (
+    <span
+      className={`grid h-6 w-7 place-items-center rounded text-xs font-bold ${
+        winner ? "bg-slate-950 text-white" : "bg-slate-100 text-slate-500"
+      }`}
+    >
+      {score ?? "-"}
+    </span>
+  );
+}
+
+function BracketMatch({
   matchNumber,
   match,
+  isLastRound,
 }: {
   matchNumber: number;
   match?: PlayoffMatch;
+  isLastRound: boolean;
 }) {
-  const [fallbackHome, fallbackAway] = getFallbackSlot(matchNumber);
-  const isOpen = match ? isMatchPredictionOpen(match.startsAt) : false;
-  const isFinished =
-    match?.homeScore !== null &&
-    match?.homeScore !== undefined &&
-    match.awayScore !== null;
+  const fallbackHome = getPlayoffSlotLabel(matchNumber, "home");
+  const fallbackAway = getPlayoffSlotLabel(matchNumber, "away");
+  const homeScore = match?.homeScore ?? null;
+  const awayScore = match?.awayScore ?? null;
+  const isFinished = homeScore !== null && awayScore !== null;
+  const homeWon = isFinished && homeScore > awayScore;
+  const awayWon = isFinished && awayScore > homeScore;
 
   return (
-    <article className="relative min-h-[172px] rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Mecz {matchNumber}
-          </p>
-          <p className="mt-1 text-xs font-medium text-emerald-700">
-            {match ? phaseLabel(match.phase) : "Drabinka"}
-          </p>
+    <div className="relative">
+      {!isLastRound ? (
+        <span className="absolute left-full top-1/2 h-px w-7 bg-blue-300" />
+      ) : null}
+      <article className="relative z-10 w-[184px] overflow-hidden rounded-md border border-slate-200 bg-white text-[11px] shadow-sm">
+        <div className="flex items-center justify-between bg-slate-200 px-2 py-1 font-semibold text-slate-700">
+          <span className="truncate">{formatMatchDate(match?.startsAt ?? new Date())}</span>
+          <span className="ml-2 shrink-0">#{matchNumber}</span>
         </div>
-        {match ? (
-          <span
-            className={`rounded-md px-2 py-1 text-xs font-semibold ${
-              isOpen
-                ? "bg-emerald-50 text-emerald-700"
-                : isFinished
-                  ? "bg-slate-100 text-slate-700"
-                  : "bg-amber-50 text-amber-700"
+        <div className="space-y-1 p-2">
+          <div
+            className={`flex items-center justify-between gap-2 rounded px-2 py-1 ${
+              homeWon ? "bg-emerald-50" : "bg-slate-50"
             }`}
           >
-            {isOpen ? "Otwarte" : isFinished ? "Wynik" : "Zamknięte"}
-          </span>
-        ) : null}
-      </div>
-
-      <div className="mt-4 space-y-2 text-sm font-semibold">
-        <div className="flex items-center justify-between gap-3 rounded-md bg-slate-50 px-3 py-2">
-          <TeamSlot
-            name={match?.homeTeam.name ?? fallbackHome}
-            flagUrl={match?.homeTeam.flagUrl}
-            muted={!match}
-          />
-          <span className="text-slate-500">{match?.homeScore ?? "-"}</span>
-        </div>
-        <div className="flex items-center justify-between gap-3 rounded-md bg-slate-50 px-3 py-2">
-          <TeamSlot
-            name={match?.awayTeam.name ?? fallbackAway}
-            flagUrl={match?.awayTeam.flagUrl}
-            muted={!match}
-          />
-          <span className="text-slate-500">{match?.awayScore ?? "-"}</span>
-        </div>
-      </div>
-
-      {match ? (
-        <div className="mt-4 border-t border-slate-100 pt-3">
-          <p className="text-xs text-slate-500">{formatMatchDate(match.startsAt)}</p>
-          <p className="mt-1 truncate text-xs text-slate-500">
-            {match.stadium
-              ? `${match.stadium.name}, ${match.stadium.city}`
-              : "Stadion do potwierdzenia"}
-          </p>
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-            <PredictionBadge match={match} />
-            <Link
-              href={`/matches/${match.id}`}
-              className={`rounded-md px-3 py-2 text-xs font-semibold transition ${
-                isOpen
-                  ? "bg-slate-950 text-white hover:bg-slate-800"
-                  : "border border-slate-200 text-slate-700 hover:bg-slate-50"
-              }`}
-            >
-              {isOpen ? "Obstaw" : "Podgląd"}
-            </Link>
+            <TeamSlot
+              name={match?.homeTeam.name ?? fallbackHome}
+              flagUrl={match?.homeTeam.flagUrl}
+            />
+            <ScoreCell score={homeScore} winner={homeWon} />
+          </div>
+          <div
+            className={`flex items-center justify-between gap-2 rounded px-2 py-1 ${
+              awayWon ? "bg-emerald-50" : "bg-slate-50"
+            }`}
+          >
+            <TeamSlot
+              name={match?.awayTeam.name ?? fallbackAway}
+              flagUrl={match?.awayTeam.flagUrl}
+            />
+            <ScoreCell score={awayScore} winner={awayWon} />
           </div>
         </div>
-      ) : (
-        <p className="mt-4 border-t border-slate-100 pt-3 text-xs leading-5 text-slate-500">
-          Mecz pojawi się w typowaniu po zaimportowaniu terminarza.
-        </p>
-      )}
-    </article>
+        <div className="border-t border-slate-100 px-2 py-1 text-[10px] font-medium text-slate-500">
+          {match ? phaseLabel(match.phase) : "Play-off"}
+        </div>
+      </article>
+    </div>
   );
 }
 
@@ -222,23 +167,17 @@ export default async function PlayoffPage() {
     redirect("/auth/signin");
   }
 
-  const matches = await getPlayoffMatches(session.user.id);
+  const matches = await getPlayoffMatches();
   const matchesByNumber = new Map(
     matches.map((match) => [match.displayOrder, match]),
   );
-  const roundOf32Matches = bracketRounds[0].matchNumbers
-    .map((matchNumber) => matchesByNumber.get(matchNumber))
-    .filter((match): match is PlayoffMatch => Boolean(match));
-  const openMatches = roundOf32Matches.filter((match) =>
-    isMatchPredictionOpen(match.startsAt),
-  );
-  const predictedMatches = roundOf32Matches.filter(
-    (match) => match.predictions.length > 0,
-  );
+  const completedMatches = matches.filter(
+    (match) => match.homeScore !== null && match.awayScore !== null,
+  ).length;
   const thirdPlaceMatch = matchesByNumber.get(103);
 
   return (
-    <main className="mx-auto min-h-screen max-w-7xl px-6 py-8">
+    <main className="mx-auto min-h-screen max-w-[1500px] px-6 py-8">
       <header className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-6">
         <div>
           <p className="wc-kicker">Play-off</p>
@@ -266,23 +205,10 @@ export default async function PlayoffPage() {
       <section className="wc-section-hero">
         <p className="wc-kicker">Faza pucharowa</p>
         <h2 className="mt-2 max-w-4xl text-3xl font-semibold tracking-tight">
-          Obstaw aktualne mecze 1/16 finału i śledź drogę aż do finału.
+          Wyniki i awanse od 1/16 finału do meczu finałowego.
         </h2>
-        <div className="mt-6 grid gap-3 text-sm sm:grid-cols-3">
-          <div className="rounded-lg bg-white/10 p-4 ring-1 ring-white/15">
-            <p className="text-white/70">Mecze 1/16 finału</p>
-            <p className="mt-1 text-2xl font-semibold">{roundOf32Matches.length}</p>
-          </div>
-          <div className="rounded-lg bg-white/10 p-4 ring-1 ring-white/15">
-            <p className="text-white/70">Otwarte do typowania</p>
-            <p className="mt-1 text-2xl font-semibold">{openMatches.length}</p>
-          </div>
-          <div className="rounded-lg bg-white/10 p-4 ring-1 ring-white/15">
-            <p className="text-white/70">Twoje typy w 1/16</p>
-            <p className="mt-1 text-2xl font-semibold">
-              {predictedMatches.length}/{roundOf32Matches.length}
-            </p>
-          </div>
+        <div className="mt-6 inline-flex rounded-md bg-white/10 px-4 py-3 text-sm font-semibold ring-1 ring-white/15">
+          Uzupełnione wyniki: {completedMatches}/{matches.length}
         </div>
       </section>
 
@@ -299,23 +225,29 @@ export default async function PlayoffPage() {
           </span>
         </div>
 
-        <div className="overflow-x-auto pb-4">
-          <div className="grid min-w-[1180px] grid-cols-[1.45fr_1.2fr_1fr_0.9fr_0.9fr] gap-4">
-            {bracketRounds.map((round) => (
-              <section key={round.title} className="space-y-3">
-                <div className="sticky top-0 z-10 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <div className="overflow-x-auto rounded-md border border-slate-200 bg-[#eaf4fb] p-4 shadow-sm">
+          <div className="grid min-w-[1180px] grid-cols-[220px_220px_220px_220px_220px] gap-x-10">
+            {bracketRounds.map((round, roundIndex) => (
+              <section key={round.title}>
+                <div className="mb-3 rounded-md bg-slate-200 px-3 py-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
                     {round.shortTitle}
                   </p>
-                  <h3 className="text-lg font-semibold">{round.title}</h3>
+                  <h3 className="text-sm font-bold text-slate-800">{round.title}</h3>
                 </div>
-                <div className="space-y-3">
-                  {round.matchNumbers.map((matchNumber) => (
-                    <BracketMatchCard
+                <div className="grid grid-rows-[repeat(32,44px)]">
+                  {round.matchNumbers.map((matchNumber, index) => (
+                    <div
                       key={matchNumber}
-                      matchNumber={matchNumber}
-                      match={matchesByNumber.get(matchNumber)}
-                    />
+                      className="flex items-center"
+                      style={{ gridRow: `${round.rows[index]} / span 2` }}
+                    >
+                      <BracketMatch
+                        matchNumber={matchNumber}
+                        match={matchesByNumber.get(matchNumber)}
+                        isLastRound={roundIndex === bracketRounds.length - 1}
+                      />
+                    </div>
                   ))}
                 </div>
               </section>
@@ -332,32 +264,15 @@ export default async function PlayoffPage() {
               Mecz o 3. miejsce
             </h2>
           </div>
-          <div className="max-w-xl">
-            <BracketMatchCard matchNumber={103} match={thirdPlaceMatch} />
+          <div className="w-fit rounded-md border border-slate-200 bg-[#eaf4fb] p-4 shadow-sm">
+            <BracketMatch
+              matchNumber={103}
+              match={thirdPlaceMatch}
+              isLastRound
+            />
           </div>
         </section>
       ) : null}
-
-      <section className="space-y-4 pb-10">
-        <div>
-          <p className="text-sm font-medium text-emerald-700">
-            Do obstawienia teraz
-          </p>
-          <h2 className="text-2xl font-semibold tracking-tight">
-            Mecze 1/16 finału
-          </h2>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          {roundOf32Matches.map((match) => (
-            <BracketMatchCard
-              key={match.id}
-              matchNumber={match.displayOrder}
-              match={match}
-            />
-          ))}
-        </div>
-      </section>
     </main>
   );
 }
