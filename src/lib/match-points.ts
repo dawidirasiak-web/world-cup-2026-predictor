@@ -73,14 +73,42 @@ export async function updateMatchResultAndRecalculate(
     homeScore: number;
     awayScore: number;
     status: "LIVE" | "FINISHED";
+    winnerTeamId?: string | null;
   },
 ) {
+  const currentMatch = await transaction.match.findUnique({
+    where: { id: params.matchId },
+    select: {
+      homeTeamId: true,
+      awayTeamId: true,
+      phase: true,
+    },
+  });
+
+  if (!currentMatch) {
+    throw new Error("Nie znaleziono meczu.");
+  }
+
+  const isPlayoffMatch = currentMatch.phase !== "GROUP_STAGE";
+  const isDraw = params.homeScore === params.awayScore;
+  const winnerTeamId =
+    isPlayoffMatch && isDraw ? params.winnerTeamId ?? null : null;
+
+  if (
+    winnerTeamId &&
+    winnerTeamId !== currentMatch.homeTeamId &&
+    winnerTeamId !== currentMatch.awayTeamId
+  ) {
+    throw new Error("Zwycięzca awansu musi być jedną z drużyn meczu.");
+  }
+
   const match = await transaction.match.update({
     where: { id: params.matchId },
     data: {
       homeScore: params.homeScore,
       awayScore: params.awayScore,
       status: params.status,
+      winnerTeamId,
     },
     select: {
       displayOrder: true,
@@ -103,6 +131,7 @@ export async function clearMatchResultAndRecalculate(
     data: {
       homeScore: null,
       awayScore: null,
+      winnerTeamId: null,
       status: "SCHEDULED",
     },
     select: {
@@ -143,16 +172,34 @@ async function getTeamForPlayoffSlot(
       awayTeamId: true,
       homeScore: true,
       awayScore: true,
+      winnerTeamId: true,
     },
   });
 
   if (
     !sourceMatch ||
     sourceMatch.homeScore === null ||
-    sourceMatch.awayScore === null ||
-    sourceMatch.homeScore === sourceMatch.awayScore
+    sourceMatch.awayScore === null
   ) {
     return null;
+  }
+
+  if (sourceMatch.homeScore === sourceMatch.awayScore) {
+    if (
+      !sourceMatch.winnerTeamId ||
+      (sourceMatch.winnerTeamId !== sourceMatch.homeTeamId &&
+        sourceMatch.winnerTeamId !== sourceMatch.awayTeamId)
+    ) {
+      return null;
+    }
+
+    if (mode === "winner") {
+      return sourceMatch.winnerTeamId;
+    }
+
+    return sourceMatch.winnerTeamId === sourceMatch.homeTeamId
+      ? sourceMatch.awayTeamId
+      : sourceMatch.homeTeamId;
   }
 
   const homeWon = sourceMatch.homeScore > sourceMatch.awayScore;

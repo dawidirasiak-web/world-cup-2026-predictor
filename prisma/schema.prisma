@@ -82,6 +82,7 @@ model Team {
   updatedAt                   DateTime                  @updatedAt
   homeMatches                 Match[]                   @relation("HomeTeam")
   awayMatches                 Match[]                   @relation("AwayTeam")
+  wonMatches                  Match[]                   @relation("WinningTeam")
   finalistOnePredictions      PreTournamentPrediction[] @relation("FinalistOne")
   finalistTwoPredictions      PreTournamentPrediction[] @relation("FinalistTwo")
 
@@ -112,6 +113,7 @@ model Match {
   status          MatchStatus        @default(SCHEDULED)
   homeScore       Int?
   awayScore       Int?
+  winnerTeamId    String?
   externalStatsUrl String?
   sofaScoreEventId String?
   sofaScoreWidgetUrl String?
@@ -119,6 +121,7 @@ model Match {
   updatedAt       DateTime          @updatedAt
   homeTeam        Team              @relation("HomeTeam", fields: [homeTeamId], references: [id])
   awayTeam        Team              @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  winnerTeam      Team?             @relation("WinningTeam", fields: [winnerTeamId], references: [id], onDelete: SetNull)
   stadium         Stadium?          @relation(fields: [stadiumId], references: [id])
   question        MatchQuestion?
   predictions     MatchPrediction[]
@@ -127,6 +130,7 @@ model Match {
   @@index([phase])
   @@index([group])
   @@index([status])
+  @@index([winnerTeamId])
 }
 
 model MatchQuestion {

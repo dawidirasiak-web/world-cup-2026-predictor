@@ -134,9 +134,16 @@ function BracketMatch({
   const fallbackAway = getPlayoffSlotLabel(matchNumber, "away");
   const homeScore = match?.homeScore ?? null;
   const awayScore = match?.awayScore ?? null;
+  const winnerTeamId = match?.winnerTeamId ?? null;
   const isFinished = homeScore !== null && awayScore !== null;
-  const homeWon = isFinished && homeScore > awayScore;
-  const awayWon = isFinished && awayScore > homeScore;
+  const homeWon =
+    isFinished &&
+    (homeScore > awayScore ||
+      (homeScore === awayScore && winnerTeamId === match?.homeTeamId));
+  const awayWon =
+    isFinished &&
+    (awayScore > homeScore ||
+      (homeScore === awayScore && winnerTeamId === match?.awayTeamId));
 
   return (
     <div className="relative">

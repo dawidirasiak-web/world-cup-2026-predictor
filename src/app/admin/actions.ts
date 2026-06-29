@@ -10,6 +10,7 @@ import {
   updateMatchResultAndRecalculate,
 } from "@/lib/match-points";
 import { prisma } from "@/lib/prisma";
+import { saveRankingSnapshot } from "@/lib/ranking-snapshots";
 import { getMatchQuestion } from "../../../prisma/match-questions";
 
 const yesNoAnswerSchema = z.enum(["Tak", "Nie", ""]);
@@ -23,6 +24,7 @@ const matchResultSchema = z.object({
   matchId: z.string().min(1),
   homeScore: z.coerce.number().int().min(0).max(30).optional(),
   awayScore: z.coerce.number().int().min(0).max(30).optional(),
+  winnerTeamId: z.string().optional(),
 });
 const registrationSettingsSchema = z.object({
   registrationBlocked: z.enum(["on", "off"]),
@@ -40,6 +42,13 @@ async function requireAdmin() {
 
 function normalizeAnswer(answer: string | null | undefined) {
   return answer?.trim().toLowerCase() ?? "";
+}
+
+async function refreshScoreViews() {
+  await saveRankingSnapshot();
+  revalidatePath("/dashboard");
+  revalidatePath("/ranking");
+  revalidatePath("/punktacja");
 }
 
 async function recalculatePreTournamentPrediction(
@@ -221,10 +230,8 @@ export async function saveMatchQuestionAnswer(formData: FormData) {
   });
 
   revalidatePath("/admin");
-  revalidatePath("/dashboard");
-  revalidatePath("/ranking");
   revalidatePath("/matches");
-  revalidatePath("/punktacja");
+  await refreshScoreViews();
 }
 
 export async function saveMatchResult(formData: FormData) {
@@ -241,6 +248,10 @@ export async function saveMatchResult(formData: FormData) {
       raw.awayScore === "" || raw.awayScore === undefined
         ? undefined
         : raw.awayScore,
+    winnerTeamId:
+      raw.winnerTeamId === "" || raw.winnerTeamId === undefined
+        ? undefined
+        : raw.winnerTeamId,
   });
 
   if (!parsed.success) {
@@ -260,21 +271,50 @@ export async function saveMatchResult(formData: FormData) {
       return;
     }
 
+    const match = await transaction.match.findUnique({
+      where: { id: parsed.data.matchId },
+      select: {
+        homeTeamId: true,
+        awayTeamId: true,
+        phase: true,
+      },
+    });
+
+    if (!match) {
+      throw new Error("Nie znaleziono meczu.");
+    }
+
+    const isPlayoffMatch = match.phase !== "GROUP_STAGE";
+    const isDraw = parsed.data.homeScore === parsed.data.awayScore;
+    const winnerTeamId =
+      isPlayoffMatch && isDraw ? parsed.data.winnerTeamId ?? null : null;
+
+    if (isPlayoffMatch && isDraw && !winnerTeamId) {
+      throw new Error("Wybierz drużynę awansującą po dogrywce lub karnych.");
+    }
+
+    if (
+      winnerTeamId &&
+      winnerTeamId !== match.homeTeamId &&
+      winnerTeamId !== match.awayTeamId
+    ) {
+      throw new Error("Drużyna awansująca musi grać w tym meczu.");
+    }
+
     await updateMatchResultAndRecalculate(transaction, {
       matchId: parsed.data.matchId,
       homeScore: parsed.data.homeScore!,
       awayScore: parsed.data.awayScore!,
       status: "FINISHED",
+      winnerTeamId,
     });
   });
 
   revalidatePath("/admin");
-  revalidatePath("/dashboard");
-  revalidatePath("/ranking");
   revalidatePath("/matches");
   revalidatePath("/match-center");
-  revalidatePath("/punktacja");
   revalidatePath("/playoff");
+  await refreshScoreViews();
 }
 
 export async function savePreTournamentQuestionAnswer(formData: FormData) {
@@ -331,9 +371,8 @@ export async function savePreTournamentQuestionAnswer(formData: FormData) {
   });
 
   revalidatePath("/admin");
-  revalidatePath("/dashboard");
-  revalidatePath("/ranking");
   revalidatePath("/pre-tournament");
+  await refreshScoreViews();
 }
 
 export async function saveTournamentResult(formData: FormData) {
@@ -391,9 +430,8 @@ export async function saveTournamentResult(formData: FormData) {
   });
 
   revalidatePath("/admin");
-  revalidatePath("/dashboard");
-  revalidatePath("/ranking");
   revalidatePath("/pre-tournament");
+  await refreshScoreViews();
 }
 
 export async function saveRegistrationSettings(formData: FormData) {

@@ -343,11 +343,14 @@ export default async function AdminPage() {
           </h2>
         </div>
         <div className="space-y-3">
-          {matches.map((match) => (
-            <article
-              key={match.id}
-              className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
-            >
+          {matches.map((match) => {
+            const isPlayoffMatch = match.phase !== "GROUP_STAGE";
+
+            return (
+              <article
+                key={match.id}
+                className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+              >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="max-w-3xl">
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -395,47 +398,66 @@ export default async function AdminPage() {
                   </button>
                 </form>
               </div>
-              <form
-                action={saveMatchResult}
-                className="mt-5 flex flex-wrap items-end justify-between gap-4 border-t border-slate-100 pt-4"
-              >
-                <input type="hidden" name="matchId" value={match.id} />
-                <div className="flex flex-wrap items-end gap-3">
-                  <label className="block text-sm font-medium text-slate-700">
-                    {match.homeTeam.name}
-                    <input
-                      name="homeScore"
-                      type="number"
-                      min={0}
-                      max={30}
-                      defaultValue={match.homeScore ?? ""}
-                      className="mt-2 w-24 rounded-md border border-slate-300 px-3 py-2 text-center outline-none focus:border-slate-900"
-                    />
-                  </label>
-                  <span className="pb-2 text-lg font-semibold text-slate-400">
-                    :
-                  </span>
-                  <label className="block text-sm font-medium text-slate-700">
-                    {match.awayTeam.name}
-                    <input
-                      name="awayScore"
-                      type="number"
-                      min={0}
-                      max={30}
-                      defaultValue={match.awayScore ?? ""}
-                      className="mt-2 w-24 rounded-md border border-slate-300 px-3 py-2 text-center outline-none focus:border-slate-900"
-                    />
-                  </label>
-                </div>
-                <button
-                  type="submit"
-                  className="rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                <form
+                  action={saveMatchResult}
+                  className="mt-5 flex flex-wrap items-end justify-between gap-4 border-t border-slate-100 pt-4"
                 >
-                  Zapisz wynik
-                </button>
-              </form>
-            </article>
-          ))}
+                  <input type="hidden" name="matchId" value={match.id} />
+                  <div className="flex flex-wrap items-end gap-3">
+                    <label className="block text-sm font-medium text-slate-700">
+                      {match.homeTeam.name}
+                      <input
+                        name="homeScore"
+                        type="number"
+                        min={0}
+                        max={30}
+                        defaultValue={match.homeScore ?? ""}
+                        className="mt-2 w-24 rounded-md border border-slate-300 px-3 py-2 text-center outline-none focus:border-slate-900"
+                      />
+                    </label>
+                    <span className="pb-2 text-lg font-semibold text-slate-400">
+                      :
+                    </span>
+                    <label className="block text-sm font-medium text-slate-700">
+                      {match.awayTeam.name}
+                      <input
+                        name="awayScore"
+                        type="number"
+                        min={0}
+                        max={30}
+                        defaultValue={match.awayScore ?? ""}
+                        className="mt-2 w-24 rounded-md border border-slate-300 px-3 py-2 text-center outline-none focus:border-slate-900"
+                      />
+                    </label>
+                    {isPlayoffMatch ? (
+                      <label className="block min-w-56 text-sm font-medium text-slate-700">
+                        Awans po dogrywce/karnych
+                        <select
+                          name="winnerTeamId"
+                          defaultValue={match.winnerTeamId ?? ""}
+                          className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-slate-900"
+                        >
+                          <option value="">Brak</option>
+                          <option value={match.homeTeamId}>
+                            {match.homeTeam.name}
+                          </option>
+                          <option value={match.awayTeamId}>
+                            {match.awayTeam.name}
+                          </option>
+                        </select>
+                      </label>
+                    ) : null}
+                  </div>
+                  <button
+                    type="submit"
+                    className="rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  >
+                    Zapisz wynik
+                  </button>
+                </form>
+              </article>
+            );
+          })}
         </div>
       </section>
     </main>

@@ -33,8 +33,8 @@ function parseSofaScoreScore(data: unknown): {
   }
 
   const event = (data as SofaScoreEventPayload).event;
-  const homeScore = event?.homeScore?.current ?? event?.homeScore?.normaltime;
-  const awayScore = event?.awayScore?.current ?? event?.awayScore?.normaltime;
+  const homeScore = event?.homeScore?.normaltime ?? event?.homeScore?.current;
+  const awayScore = event?.awayScore?.normaltime ?? event?.awayScore?.current;
 
   if (typeof homeScore !== "number" || typeof awayScore !== "number") {
     return null;
